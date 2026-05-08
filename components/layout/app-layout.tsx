@@ -118,7 +118,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         <div className="h-16 flex items-center gap-3 px-5 border-b">
           <div className="w-9 h-9 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold text-lg">🔧</div>
           <div>
-            <div className="text-sm font-bold text-gray-900">ระบบแจ้งซ่อม</div>
+            <div className="text-sm font-bold text-gray-900">RepairDesk</div>
             <div className="text-xs text-gray-500">คอมพิวเตอร์</div>
           </div>
         </div>

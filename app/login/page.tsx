@@ -38,7 +38,7 @@ export default function LoginPage() {
             <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-600 rounded-2xl mb-4">
               <span className="text-3xl">🔧</span>
             </div>
-            <h1 className="text-xl font-bold text-gray-900">ระบบแจ้งซ่อมคอมพิวเตอร์</h1>
+            <h1 className="text-xl font-bold text-gray-900">RepairDesk</h1>
             <p className="text-sm text-gray-500 mt-1">เข้าสู่ระบบเพื่อดำเนินการ</p>
           </div>
 
@@ -84,7 +84,7 @@ export default function LoginPage() {
         </div>
 
         <p className="text-center text-xs text-gray-400 mt-6">
-          NSTDA Computer Repair Helpdesk
+          RepairDesk
         </p>
       </div>
     </div>

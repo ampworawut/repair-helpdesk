@@ -4,8 +4,8 @@ import { Toaster } from 'sonner'
 import AppLayout from '@/components/layout/app-layout'
 
 export const metadata: Metadata = {
-  title: 'ระบบแจ้งซ่อมคอมพิวเตอร์',
-  description: 'NSTDA Computer Repair Helpdesk',
+  title: 'RepairDesk',
+  description: 'RepairDesk - Computer Repair Helpdesk',
 }
 
 export default function RootLayout({
