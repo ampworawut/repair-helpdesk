@@ -7,6 +7,7 @@ import { Asset, UserProfile } from '@/types'
 import { cn } from '@/lib/utils'
 import LocationPicker from '@/components/cases/location-picker'
 import AssetAutocomplete from '@/components/cases/asset-autocomplete'
+import { classifyCase } from '@/lib/categories'
 import { ArrowLeft, Upload, X, Image as ImageIcon } from 'lucide-react'
 import Link from 'next/link'
 
@@ -84,7 +85,10 @@ export default function NewCasePage() {
 
     setSubmitting(true)
     try {
-      // 1. Create case
+      // 1. Classify
+      const category = classifyCase(form.title, form.description)
+
+      // 2. Create case
       const { data: newCase, error: caseError } = await supabase
         .from('repair_cases')
         .insert({
@@ -92,9 +96,9 @@ export default function NewCasePage() {
           title: form.title,
           description: form.description || null,
           priority: form.priority,
+          category,
           service_location: form.serviceLocation,
           created_by: profile.id,
-          // SLA deadlines calculated by backend trigger, or we set null and let edge function handle
         })
         .select('id')
         .single()

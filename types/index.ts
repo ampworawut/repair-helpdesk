@@ -10,6 +10,8 @@ export type CasePriority = 'low' | 'medium' | 'high' | 'critical';
 
 export type AssetStatus = 'available' | 'in_use' | 'pending' | 'under_repair' | 'retired';
 
+export type CaseCategory = 'hardware' | 'software' | 'network' | 'printer' | 'peripheral' | 'account' | 'other';
+
 export type NotificationType =
   | 'new_case'
   | 'sla_warning'
@@ -103,6 +105,7 @@ export interface RepairCase {
   priority: CasePriority;
   status: CaseStatus;
   confirmation_status: ConfirmationStatus;
+  category: CaseCategory | null;
   service_location: string | null;
   created_by: string | null;
   created_by_profile?: UserProfile;

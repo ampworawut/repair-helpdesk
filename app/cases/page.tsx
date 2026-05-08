@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase'
 import { RepairCase, UserProfile, STATUS_LABELS, PRIORITY_LABELS, STATUS_COLORS, PRIORITY_COLORS } from '@/types'
+import { CATEGORY_LABELS, CATEGORY_COLORS, type CaseCategory } from '@/lib/categories'
 import { cn, formatDateTime, timeAgo } from '@/lib/utils'
 import Link from 'next/link'
 import { Search, Filter } from 'lucide-react'
@@ -103,6 +104,7 @@ export default function CasesListPage() {
                 <tr>
                   <th className="px-5 py-3 font-medium">เลขเคส</th>
                   <th className="px-5 py-3 font-medium">หัวข้อ</th>
+                  <th className="px-5 py-3 font-medium">หมวดหมู่</th>
                   <th className="px-5 py-3 font-medium">เครื่อง</th>
                   <th className="px-5 py-3 font-medium">ผู้แจ้ง</th>
                   <th className="px-5 py-3 font-medium">สถานะ</th>
@@ -119,6 +121,11 @@ export default function CasesListPage() {
                       </Link>
                     </td>
                     <td className="px-5 py-3.5 font-medium text-gray-900 max-w-[250px] truncate">{c.title}</td>
+                    <td className="px-5 py-3.5">
+                      <span className={cn('px-2 py-0.5 rounded-full text-xs font-medium', CATEGORY_COLORS[(c.category as CaseCategory) || 'other'])}>
+                        {CATEGORY_LABELS[(c.category as CaseCategory) || 'other']}
+                      </span>
+                    </td>
                     <td className="px-5 py-3.5 text-gray-600 text-xs font-mono">{(c as any).asset?.asset_code || '-'}</td>
                     <td className="px-5 py-3.5 text-gray-600">{(c as any).created_by_profile?.display_name || '-'}</td>
                     <td className="px-5 py-3.5">
@@ -137,7 +144,7 @@ export default function CasesListPage() {
                   </tr>
                 ))}
                 {filtered.length === 0 && (
-                  <tr><td colSpan={7} className="px-5 py-12 text-center text-gray-400">ไม่พบเคส</td></tr>
+                  <tr><td colSpan={8} className="px-5 py-12 text-center text-gray-400">ไม่พบเคส</td></tr>
                 )}
               </tbody>
             </table>

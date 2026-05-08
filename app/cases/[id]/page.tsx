@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase'
 import { evaluateSLA, formatMet, getEscalationLevel, calculatePausedDuration, adjustDeadlineForPause } from '@/lib/sla'
 import { canCloseCase, canUpdateCase, canAssignTechnician, canChangeCaseOwner, canPauseResumeSLA, canConfirmResolution } from '@/lib/permissions'
 import { cn, formatDateTime, timeAgo, getInitials } from '@/lib/utils'
+import { CATEGORY_LABELS, CATEGORY_COLORS, type CaseCategory } from '@/lib/categories'
 import {
   RepairCase, CaseStatus, CasePriority, UserProfile, CaseAttachment,
   CaseActivity, Asset, Vendor, Location,
@@ -17,7 +18,7 @@ import {
   ArrowLeft, Send, Paperclip, X, Image as ImageIcon,
   UserPlus, ChevronDown, Clock, MapPin, Monitor, Building2,
   CheckCircle2, XCircle, AlertTriangle, ExternalLink, Download,
-  PauseCircle, PlayCircle, ShieldAlert, MessageSquare,
+  PauseCircle, PlayCircle, ShieldAlert, MessageSquare, Pencil,
 } from 'lucide-react'
 
 /* ── Status Flow (valid transitions) ── */
@@ -73,9 +74,15 @@ export default function CaseDetailPage() {
   // Dropdowns
   const [showStatusMenu, setShowStatusMenu] = useState(false)
   const [showAssign, setShowAssign] = useState(false)
+  const [showCategoryEdit, setShowCategoryEdit] = useState(false)
 
   // Vendor staff list (for assignment)
   const [vendorStaff, setVendorStaff] = useState<UserProfile[]>([])
+
+  // Category editing
+  const [editingCategory, setEditingCategory] = useState(false)
+  const [editCategoryValue, setEditCategoryValue] = useState<CaseCategory>('other')
+  const CATEGORIES: CaseCategory[] = ['hardware', 'software', 'network', 'printer', 'peripheral', 'account', 'other']
 
   // SLA display — reactive countdown
   const [now, setNow] = useState(new Date())
@@ -287,6 +294,19 @@ export default function CaseDetailPage() {
     loadData()
   }
 
+  async function saveCategory(cat: CaseCategory) {
+    if (!c) return
+    setShowCategoryEdit(false)
+    await supabase.from('repair_cases').update({ category: cat }).eq('id', c.id)
+    await supabase.from('case_activity_log').insert({
+      case_id: c.id, user_id: profile!.id,
+      action: 'category_change',
+      old_value: c.category || 'other',
+      new_value: cat,
+    })
+    loadData()
+  }
+
   function handleUpdateFiles(e: React.ChangeEvent<HTMLInputElement>) {
     const files = Array.from(e.target.files || [])
     const valid = files.filter(f => f.size <= 5 * 1024 * 1024)
@@ -351,6 +371,34 @@ export default function CaseDetailPage() {
               <h1 className="text-xl font-bold text-gray-900">{c.case_no}</h1>
               <span className={cn('px-2.5 py-1 rounded-full text-xs font-semibold', PRIORITY_COLORS[c.priority])}>{PRIORITY_LABELS[c.priority]}</span>
               <span className={cn('px-2.5 py-1 rounded-full text-xs font-semibold', STATUS_COLORS[c.status])}>{STATUS_LABELS[c.status]}</span>
+              {/* Category badge */}
+              {(profile?.role === 'admin' || profile?.role === 'supervisor') ? (
+                <div className="relative">
+                  <button
+                    onClick={() => { setShowCategoryEdit(!showCategoryEdit); setEditCategoryValue((c.category as CaseCategory) || 'other') }}
+                    className={cn('px-2.5 py-1 rounded-full text-xs font-semibold cursor-pointer hover:opacity-80 transition', CATEGORY_COLORS[(c.category as CaseCategory) || 'other'])}
+                  >
+                    {CATEGORY_LABELS[(c.category as CaseCategory) || 'other']} ▾
+                  </button>
+                  {showCategoryEdit && (
+                    <div className="absolute top-full mt-1 left-0 bg-white border rounded-lg shadow-lg z-20 py-1 min-w-[180px]">
+                      {CATEGORIES.map(cat => (
+                        <button key={cat} type="button" onClick={() => saveCategory(cat)}
+                          className={cn('w-full text-left px-4 py-2 text-sm hover:bg-gray-50 transition flex items-center gap-2',
+                            (c.category || 'other') === cat && 'bg-blue-50 font-medium')}
+                        >
+                          {CATEGORY_LABELS[cat]}
+                          {(c.category || 'other') === cat && <span className="text-blue-600 ml-auto">✓</span>}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <span className={cn('px-2.5 py-1 rounded-full text-xs font-semibold', CATEGORY_COLORS[(c.category as CaseCategory) || 'other'])}>
+                  {CATEGORY_LABELS[(c.category as CaseCategory) || 'other']}
+                </span>
+              )}
               {escalationInfo && (
                 <span className={cn('px-2.5 py-1 rounded-full text-xs font-semibold', escalationInfo.color === 'yellow' ? 'bg-yellow-100 text-yellow-800' : escalationInfo.color === 'orange' ? 'bg-orange-100 text-orange-800' : escalationInfo.color === 'red' ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800')}>
                   <ShieldAlert className="w-3 h-3 inline mr-1" />{escalationInfo.label}
