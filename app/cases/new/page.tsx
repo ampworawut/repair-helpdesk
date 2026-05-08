@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase'
 import { Asset, UserProfile } from '@/types'
 import { cn } from '@/lib/utils'
 import LocationPicker from '@/components/cases/location-picker'
+import AssetAutocomplete from '@/components/cases/asset-autocomplete'
 import { ArrowLeft, Upload, X, Image as ImageIcon } from 'lucide-react'
 import Link from 'next/link'
 
@@ -14,7 +15,6 @@ export default function NewCasePage() {
   const supabase = createClient()
 
   const [profile, setProfile] = useState<UserProfile | null>(null)
-  const [assets, setAssets] = useState<Asset[]>([])
   const [selectedAsset, setSelectedAsset] = useState<Asset | null>(null)
   const [files, setFiles] = useState<File[]>([])
   const [previews, setPreviews] = useState<string[]>([])
@@ -35,15 +35,14 @@ export default function NewCasePage() {
       supabase.from('user_profiles').select('*').eq('id', session.user.id).single()
         .then(({ data }) => setProfile(data as UserProfile))
     })
-
-    supabase.from('assets').select('*').eq('is_active', true).order('asset_code')
-      .then(({ data }) => setAssets(data as Asset[] || []))
   }, [])
 
-  function handleAssetSelect(code: string) {
-    const asset = assets.find(a => a.asset_code === code) || null
+  function handleAssetSelect(asset: Asset) {
     setSelectedAsset(asset)
-    setForm(f => ({ ...f, assetCode: code }))
+  }
+
+  function handleAssetClear() {
+    setSelectedAsset(null)
   }
 
   function handleFileAdd(e: React.ChangeEvent<HTMLInputElement>) {
@@ -72,7 +71,7 @@ export default function NewCasePage() {
 
   function validate(): boolean {
     const e: Record<string, string> = {}
-    if (!form.assetCode.trim()) e.assetCode = 'กรุณาเลือกอุปกรณ์'
+    if (!selectedAsset) e.assetCode = 'กรุณาเลือกอุปกรณ์'
     if (!form.title.trim()) e.title = 'กรุณากรอกหัวข้อแจ้งซ่อม'
     if (!form.serviceLocation.trim()) e.serviceLocation = 'กรุณาระบุสถานที่รับบริการ'
     setErrors(e)
@@ -161,29 +160,13 @@ export default function NewCasePage() {
         {/* อุปกรณ์ */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">อุปกรณ์/เครื่อง *</label>
-          <select
-            value={form.assetCode}
-            onChange={e => handleAssetSelect(e.target.value)}
-            className={cn(
-              'w-full px-4 py-3 border rounded-lg bg-white outline-none transition',
-              errors.assetCode ? 'border-red-400' : 'border-gray-300 focus:ring-2 focus:ring-blue-500'
-            )}
-          >
-            <option value="">🔍 ค้นหาจากรหัสหรือชื่อเครื่อง...</option>
-            {assets.map(a => (
-              <option key={a.id} value={a.asset_code}>{a.asset_code} — {a.model || 'N/A'}</option>
-            ))}
-          </select>
-          {errors.assetCode && <p className="text-red-500 text-sm mt-1">{errors.assetCode}</p>}
-
-          {selectedAsset && (
-            <div className="mt-3 p-4 bg-gray-50 rounded-lg text-sm space-y-1">
-              <div>📋 <strong>รุ่น:</strong> {selectedAsset.model || '-'}</div>
-              <div>🏢 <strong>ผู้ให้เช่า:</strong> {selectedAsset.vendor?.name || 'ไม่ระบุ'}</div>
-              <div>📍 <strong>ตำแหน่งปัจจุบัน:</strong> {selectedAsset.location || 'ไม่ระบุ'}</div>
-              <div>📦 <strong>สถานะ:</strong> {selectedAsset.status}</div>
-            </div>
-          )}
+          <AssetAutocomplete
+            value={selectedAsset?.asset_code || ''}
+            asset={selectedAsset}
+            onSelect={handleAssetSelect}
+            onClear={handleAssetClear}
+            error={errors.assetCode}
+          />
         </div>
 
         {/* หัวข้อ */}
