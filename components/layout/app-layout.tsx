@@ -25,6 +25,7 @@ import {
   ChevronRight,
   Layers,
   FileText,
+  UserRound,
 } from 'lucide-react'
 import Link from 'next/link'
 
@@ -207,6 +208,14 @@ function AppShell({ children }: { children: React.ReactNode }) {
               <div className="text-xs text-gray-500">{role && ROLE_LABELS[role]}</div>
             </div>
           </div>
+          <Link
+            href="/profile"
+            onClick={() => setSidebarOpen(false)}
+            className="flex items-center gap-2 w-full px-3 py-2 mb-1 text-sm text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+          >
+            <UserRound className="w-4 h-4" />
+            โปรไฟล์
+          </Link>
           <button
             onClick={handleSignOut}
             className="flex items-center gap-2 w-full px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg transition-colors"

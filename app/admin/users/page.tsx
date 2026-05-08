@@ -3,8 +3,9 @@
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase'
 import { UserProfile, UserRole, ROLE_LABELS } from '@/types'
-import { cn, getInitials } from '@/lib/utils'
-import { Plus, Trash2, Edit3, Save, X, UserPlus } from 'lucide-react'
+import { cn, getInitials, formatDateTime } from '@/lib/utils'
+import { Plus, Edit3, Save, X, UserPlus, KeyRound, Lock } from 'lucide-react'
+import ChangePasswordModal from '@/components/admin/change-password-modal'
 
 const ROLES: UserRole[] = ['admin', 'supervisor', 'helpdesk', 'vendor_staff']
 
@@ -25,6 +26,9 @@ export default function AdminUsersPage() {
     vendor_id: '',
   })
   const [creating, setCreating] = useState(false)
+
+  // Change password
+  const [changePassUser, setChangePassUser] = useState<UserProfile | null>(null)
 
   const supabase = createClient()
 
@@ -231,7 +235,10 @@ export default function AdminUsersPage() {
                         <button onClick={() => setEditing(null)} className="p-2 text-gray-400 hover:bg-gray-100 rounded transition"><X className="w-4 h-4" /></button>
                       </div>
                     ) : (
-                      <button onClick={() => startEdit(u)} className="p-2 text-gray-400 hover:bg-gray-100 rounded transition"><Edit3 className="w-4 h-4" /></button>
+                      <div className="flex gap-1 justify-end">
+                        <button onClick={() => setChangePassUser(u)} className="p-2 text-amber-500 hover:bg-amber-50 rounded transition" title="เปลี่ยนรหัสผ่าน"><Lock className="w-4 h-4" /></button>
+                        <button onClick={() => startEdit(u)} className="p-2 text-gray-400 hover:bg-gray-100 rounded transition"><Edit3 className="w-4 h-4" /></button>
+                      </div>
                     )}
                   </td>
                 </tr>
@@ -240,6 +247,14 @@ export default function AdminUsersPage() {
           </table>
         </div>
       </div>
+      {/* Change Password Modal */}
+      {changePassUser && (
+        <ChangePasswordModal
+          userId={changePassUser.id}
+          onClose={() => setChangePassUser(null)}
+          onSuccess={() => loadUsers()}
+        />
+      )}
     </div>
   )
 }

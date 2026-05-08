@@ -37,6 +37,7 @@ export interface UserProfile {
   email: string | null;
   phone: string | null;
   is_active: boolean;
+  password_changed_at: string | null;
   created_at: string;
   updated_at: string;
 }
