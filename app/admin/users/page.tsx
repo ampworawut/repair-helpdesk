@@ -14,8 +14,18 @@ export default function AdminUsersPage() {
   const [profile, setProfile] = useState<UserProfile | null>(null)
   const [editing, setEditing] = useState<string | null>(null)
   const [editForm, setEditForm] = useState({ display_name: '', role: 'helpdesk' as string, vendor_id: '' })
-  const [inviteEmail, setInviteEmail] = useState('')
-  const [inviting, setInviting] = useState(false)
+
+  // Create form
+  const [showCreate, setShowCreate] = useState(false)
+  const [createForm, setCreateForm] = useState({
+    email: '',
+    password: '',
+    display_name: '',
+    role: 'helpdesk' as string,
+    vendor_id: '',
+  })
+  const [creating, setCreating] = useState(false)
+
   const supabase = createClient()
 
   useEffect(() => {
@@ -53,13 +63,37 @@ export default function AdminUsersPage() {
     loadUsers()
   }
 
-  async function handleInvite() {
-    if (!inviteEmail) return
-    setInviting(true)
-    const { data, error } = await supabase.auth.admin.inviteUserByEmail(inviteEmail)
-    if (error) { alert('ไม่สามารถส่งคำเชิญได้: ' + error.message); setInviting(false); return }
-    // Wait and refresh
-    setTimeout(() => { loadUsers(); setInviteEmail(''); setInviting(false) }, 1500)
+  async function handleCreate() {
+    const { email, password, display_name, role, vendor_id } = createForm
+    if (!email || !password || !display_name) return
+
+    // Basic validation
+    if (password.length < 6) { alert('รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร'); return }
+
+    setCreating(true)
+    try {
+      const res = await fetch('/api/users/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password, display_name, role, vendor_id: vendor_id || null }),
+      })
+
+      const json = await res.json()
+      if (!res.ok) {
+        alert('สร้างไม่สำเร็จ: ' + (json.error || res.statusText))
+        setCreating(false)
+        return
+      }
+
+      // Success
+      setShowCreate(false)
+      setCreateForm({ email: '', password: '', display_name: '', role: 'helpdesk', vendor_id: '' })
+      alert(`✅ สร้างผู้ใช้ ${display_name} สำเร็จ`)
+      loadUsers()
+    } catch (err: any) {
+      alert('เกิดข้อผิดพลาด: ' + (err.message || 'ไม่สามารถสร้างผู้ใช้ได้'))
+    }
+    setCreating(false)
   }
 
   if (!profile || profile.role !== 'admin') return null
@@ -71,24 +105,63 @@ export default function AdminUsersPage() {
           <h1 className="text-2xl font-bold text-gray-900">จัดการผู้ใช้งาน</h1>
           <p className="text-sm text-gray-500 mt-1">เพิ่ม แก้ไข และกำหนดสิทธิ์ผู้ใช้งาน</p>
         </div>
+        <button onClick={() => setShowCreate(!showCreate)}
+          className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium text-sm">
+          <Plus className="w-4 h-4" /> เพิ่มผู้ใช้
+        </button>
       </div>
 
-      {/* Invite */}
-      <div className="bg-white rounded-xl border p-5">
-        <h2 className="font-semibold text-gray-900 mb-3">เชิญผู้ใช้ใหม่</h2>
-        <div className="flex gap-3">
-          <input
-            type="email" value={inviteEmail} onChange={e => setInviteEmail(e.target.value)}
-            placeholder="email@example.com"
-            className="flex-1 px-4 py-3 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-          />
-          <button onClick={handleInvite} disabled={inviting || !inviteEmail}
-            className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition font-medium text-sm">
-            <UserPlus className="w-4 h-4" /> {inviting ? 'กำลังส่ง...' : 'ส่งคำเชิญ'}
-          </button>
+      {/* Create Form */}
+      {showCreate && (
+        <div className="bg-white rounded-xl border p-5 space-y-4">
+          <h2 className="font-semibold text-gray-900">เพิ่มผู้ใช้ใหม่</h2>
+          <div className="grid sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">ชื่อที่แสดง *</label>
+              <input type="text" value={createForm.display_name} onChange={e => setCreateForm(f => ({ ...f, display_name: e.target.value }))}
+                placeholder="สมชาย ใจดี"
+                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 text-sm" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">อีเมล *</label>
+              <input type="email" value={createForm.email} onChange={e => setCreateForm(f => ({ ...f, email: e.target.value }))}
+                placeholder="somchai@example.com"
+                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 text-sm" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">รหัสผ่าน *</label>
+              <input type="password" value={createForm.password} onChange={e => setCreateForm(f => ({ ...f, password: e.target.value }))}
+                placeholder="อย่างน้อย 6 ตัวอักษร"
+                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 text-sm" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">บทบาท *</label>
+              <select value={createForm.role} onChange={e => setCreateForm(f => ({ ...f, role: e.target.value }))}
+                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 text-sm bg-white">
+                {ROLES.map(r => <option key={r} value={r}>{ROLE_LABELS[r]}</option>)}
+              </select>
+            </div>
+            <div className="sm:col-span-2">
+              <label className="block text-sm font-medium text-gray-700 mb-1">ผู้ให้เช่า (สำหรับ vendor_staff)</label>
+              <select value={createForm.vendor_id} onChange={e => setCreateForm(f => ({ ...f, vendor_id: e.target.value }))}
+                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 text-sm bg-white">
+                <option value="">-- ไม่ระบุ --</option>
+                {vendors.map(v => <option key={v.id} value={v.id}>{v.name}</option>)}
+              </select>
+            </div>
+          </div>
+          <div className="flex gap-3 justify-end pt-2">
+            <button onClick={() => setShowCreate(false)}
+              className="px-5 py-2.5 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition font-medium text-sm">
+              ยกเลิก
+            </button>
+            <button onClick={handleCreate} disabled={creating}
+              className="flex items-center gap-2 px-6 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition font-medium text-sm">
+              <UserPlus className="w-4 h-4" /> {creating ? 'กำลังสร้าง...' : 'สร้างผู้ใช้'}
+            </button>
+          </div>
         </div>
-        <p className="text-xs text-gray-400 mt-2">ผู้ใช้จะได้รับอีเมลเชิญให้สมัครสมาชิก</p>
-      </div>
+      )}
 
       {/* Table */}
       <div className="bg-white rounded-xl border overflow-hidden">
