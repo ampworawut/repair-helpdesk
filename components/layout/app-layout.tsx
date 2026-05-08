@@ -4,8 +4,9 @@ import { useState, useEffect } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
 import { UserProfile, UserRole, ROLE_LABELS } from '@/types'
-import { NAV_ITEMS, NavItem } from '@/lib/permissions'
+import { NAV_ITEMS } from '@/lib/permissions'
 import { cn, getInitials } from '@/lib/utils'
+import { ProfileProvider, useProfile } from '@/contexts/profile-context'
 import {
   LayoutDashboard,
   ClipboardList,
@@ -35,71 +36,88 @@ const ICON_MAP: Record<string, React.ElementType> = {
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const [profile, setProfile] = useState<UserProfile | null>(null)
-  const [sidebarOpen, setSidebarOpen] = useState(false)
-  const [expandedMenus, setExpandedMenus] = useState<Set<string>>(new Set())
-  const [notifCount, setNotifCount] = useState(0)
   const pathname = usePathname()
   const router = useRouter()
   const supabase = createClient()
-  const isAuthPage = pathname === '/login' || pathname === '/auth/callback'
+  const isAuthPage = pathname === '/login' || pathname.startsWith('/auth/callback')
 
   useEffect(() => {
     if (isAuthPage) return
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (!session) return router.push('/login')
       supabase.from('user_profiles').select('*').eq('id', session.user.id).single()
-        .then(({ data }) => setProfile(data as UserProfile))
+        .then(({ data }) => {
+          if (data) setProfile(data as UserProfile)
+        })
     })
+  }, [isAuthPage])
 
-    // Realtime notifications
+  if (isAuthPage) {
+    return <>{children}</>
+  }
+
+  if (!profile) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin h-8 w-8 border-4 border-blue-600 border-t-transparent rounded-full" />
+      </div>
+    )
+  }
+
+  return (
+    <ProfileProvider profile={profile} loading={false}>
+      <AppShell>{children}</AppShell>
+    </ProfileProvider>
+  )
+}
+
+function AppShell({ children }: { children: React.ReactNode }) {
+  const profile = useProfile().profile!
+  const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [expandedMenus, setExpandedMenus] = useState<Set<string>>(new Set())
+  const [notifCount, setNotifCount] = useState(0)
+  const pathname = usePathname()
+  const router = useRouter()
+  const supabase = createClient()
+  const role = profile.role as UserRole | null
+  const visibleNav = NAV_ITEMS.filter(item => role && item.roles.includes(role))
+
+  // Realtime notifications
+  useEffect(() => {
     const channel = supabase
       .channel('notifications')
       .on('postgres_changes', {
         event: 'INSERT',
         schema: 'public',
         table: 'notifications',
-        filter: `user_id=eq.${profile?.id}`,
+        filter: `user_id=eq.${profile.id}`,
       }, () => {
         setNotifCount(c => c + 1)
       })
       .subscribe()
 
     return () => { supabase.removeChannel(channel) }
-  }, [])
+  }, [profile.id])
 
   // Load unread count
   useEffect(() => {
-    if (!profile?.id) return
     supabase.from('notifications').select('id', { count: 'exact', head: true })
       .eq('user_id', profile.id).eq('is_read', false)
       .then(({ count }) => setNotifCount(count || 0))
-  }, [profile?.id])
-
-  const role = profile?.role as UserRole | null
-
-  const visibleNav = NAV_ITEMS.filter(item => role && item.roles.includes(role))
+  }, [profile.id])
 
   function toggleExpand(key: string) {
-    const next = new Set(expandedMenus)
-    if (next.has(key)) next.delete(key)
-    else next.add(key)
-    setExpandedMenus(next)
+    setExpandedMenus(prev => {
+      const next = new Set(prev)
+      if (next.has(key)) next.delete(key)
+      else next.add(key)
+      return next
+    })
   }
 
   async function handleSignOut() {
     await supabase.auth.signOut()
     router.push('/login')
-  }
-
-  if (!profile && !isAuthPage) {
-    return <div className="flex items-center justify-center min-h-screen">
-      <div className="animate-spin h-8 w-8 border-4 border-blue-600 border-t-transparent rounded-full" />
-    </div>
-  }
-
-  // On auth pages (login, callback), render children without the app shell
-  if (isAuthPage) {
-    return <>{children}</>
   }
 
   return (
@@ -119,7 +137,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           <div className="w-9 h-9 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold text-lg">🔧</div>
           <div>
             <div className="text-sm font-bold text-gray-900">RepairDesk</div>
-            <div className="text-xs text-gray-500">คอมพิวเตอร์</div>
+            <div className="text-xs text-gray-500">Repair Helpdesk</div>
           </div>
         </div>
 
@@ -151,7 +169,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                   )}
                 </Link>
 
-                {/* Children */}
                 {hasChildren && isExpanded && (
                   <div className="ml-8 mt-1 space-y-1">
                     {item.children!.map(child => {
@@ -183,10 +200,10 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         <div className="border-t p-4">
           <div className="flex items-center gap-3 mb-3">
             <div className="w-9 h-9 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-semibold text-sm">
-              {profile ? getInitials(profile.display_name) : '??'}
+              {getInitials(profile.display_name)}
             </div>
             <div className="flex-1 min-w-0">
-              <div className="text-sm font-medium text-gray-900 truncate">{profile?.display_name}</div>
+              <div className="text-sm font-medium text-gray-900 truncate">{profile.display_name}</div>
               <div className="text-xs text-gray-500">{role && ROLE_LABELS[role]}</div>
             </div>
           </div>

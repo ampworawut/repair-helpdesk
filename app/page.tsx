@@ -2,24 +2,19 @@
 
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase'
-import { RepairCase, UserProfile, STATUS_LABELS, PRIORITY_LABELS, PRIORITY_COLORS, STATUS_COLORS } from '@/types'
+import { useProfile } from '@/contexts/profile-context'
+import { RepairCase, STATUS_LABELS, PRIORITY_LABELS, PRIORITY_COLORS, STATUS_COLORS } from '@/types'
 import { cn, formatDateTime, timeAgo } from '@/lib/utils'
 import Link from 'next/link'
 import { PlusCircle, AlertTriangle, Clock, CheckCircle2, TrendingUp, PauseCircle } from 'lucide-react'
 
 export default function DashboardPage() {
   const [cases, setCases] = useState<RepairCase[]>([])
-  const [profile, setProfile] = useState<UserProfile | null>(null)
+  const { profile } = useProfile()
   const [counts, setCounts] = useState({ total: 0, pending: 0, slaWarning: 0, breached: 0, onHold: 0 })
   const supabase = createClient()
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (!session) return
-      supabase.from('user_profiles').select('*').eq('id', session.user.id).single()
-        .then(({ data }) => setProfile(data as UserProfile))
-    })
-
     loadCases()
   }, [])
 
@@ -81,7 +76,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         {statCards.map(card => (
           <div key={card.label} className="bg-white rounded-xl border p-5 flex items-center gap-4">
             <div className={cn('w-12 h-12 rounded-lg flex items-center justify-center', card.color)}>
