@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase'
 import { UserProfile, UserRole, ROLE_LABELS } from '@/types'
 import { cn, getInitials, formatDateTime } from '@/lib/utils'
-import { Plus, Edit3, Save, X, UserPlus, KeyRound, Lock } from 'lucide-react'
+import { Plus, Edit3, Save, X, UserPlus, KeyRound, Lock, Trash2 } from 'lucide-react'
 import ChangePasswordModal from '@/components/admin/change-password-modal'
 
 const ROLES: UserRole[] = ['admin', 'supervisor', 'helpdesk', 'vendor_staff']
@@ -98,6 +98,25 @@ export default function AdminUsersPage() {
       alert('เกิดข้อผิดพลาด: ' + (err.message || 'ไม่สามารถสร้างผู้ใช้ได้'))
     }
     setCreating(false)
+  }
+
+  async function handleDelete(u: UserProfile) {
+    if (!confirm(`คุณแน่ใจที่จะลบผู้ใช้ "${u.display_name}" (${u.email}) ใช่หรือไม่?\n\n⚠️ การลบนี้ไม่สามารถเรียกคืนได้`)) return
+
+    const res = await fetch('/api/users/delete', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId: u.id }),
+    })
+
+    const json = await res.json()
+    if (!res.ok) {
+      alert('ลบไม่สำเร็จ: ' + (json.error || res.statusText))
+      return
+    }
+
+    alert(`✅ ลบผู้ใช้ "${u.display_name}" เรียบร้อย`)
+    loadUsers()
   }
 
   if (!profile || profile.role !== 'admin') return null
@@ -236,6 +255,7 @@ export default function AdminUsersPage() {
                       </div>
                     ) : (
                       <div className="flex gap-1 justify-end">
+                        <button onClick={() => handleDelete(u)} className="p-2 text-red-500 hover:bg-red-50 rounded transition" title="ลบผู้ใช้"><Trash2 className="w-4 h-4" /></button>
                         <button onClick={() => setChangePassUser(u)} className="p-2 text-amber-500 hover:bg-amber-50 rounded transition" title="เปลี่ยนรหัสผ่าน"><Lock className="w-4 h-4" /></button>
                         <button onClick={() => startEdit(u)} className="p-2 text-gray-400 hover:bg-gray-100 rounded transition"><Edit3 className="w-4 h-4" /></button>
                       </div>
