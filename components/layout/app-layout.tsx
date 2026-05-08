@@ -41,8 +41,10 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
   const router = useRouter()
   const supabase = createClient()
+  const isAuthPage = pathname === '/login' || pathname === '/auth/callback'
 
   useEffect(() => {
+    if (isAuthPage) return
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (!session) return router.push('/login')
       supabase.from('user_profiles').select('*').eq('id', session.user.id).single()
@@ -89,10 +91,15 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     router.push('/login')
   }
 
-  if (!profile) {
+  if (!profile && !isAuthPage) {
     return <div className="flex items-center justify-center min-h-screen">
       <div className="animate-spin h-8 w-8 border-4 border-blue-600 border-t-transparent rounded-full" />
     </div>
+  }
+
+  // On auth pages (login, callback), render children without the app shell
+  if (isAuthPage) {
+    return <>{children}</>
   }
 
   return (
