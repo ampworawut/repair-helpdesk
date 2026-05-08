@@ -54,7 +54,6 @@ export default function AssetAutocomplete({ value, asset, onSelect, onClear, err
       .from('assets')
       .select('*, vendor:vendor_id(id, name)')
       .or(`asset_code.ilike.%${q}%,model.ilike.%${q}%,serial_number.ilike.%${q}%`)
-      .eq('is_active', true)
       .order('asset_code')
       .limit(20)
 
