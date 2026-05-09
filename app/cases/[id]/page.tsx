@@ -52,6 +52,7 @@ export default function CaseDetailPage() {
   const [c, setCase] = useState<RepairCase | null>(null)
   const [asset, setAsset] = useState<Asset | null>(null)
   const [vendor, setVendor] = useState<Vendor | null>(null)
+  const [vendorGroup, setVendorGroup] = useState<{ id: string; name: string } | null>(null)
   const [attachments, setAttachments] = useState<CaseAttachment[]>([])
   const [activities, setActivities] = useState<CaseActivity[]>([])
   const [comments, setComments] = useState<TicketComment[]>([])
@@ -100,10 +101,10 @@ export default function CaseDetailPage() {
     const { data: prof } = await supabase.from('user_profiles').select('*').eq('id', sessionData.session.user.id).single()
     setProfile(prof as UserProfile)
 
-    // Case + asset + vendor
+    // Case + asset + vendor + vendor group
     const { data: caseData } = await supabase
       .from('repair_cases')
-      .select('*, asset:assets(*, vendor:vendor_id(*)), created_by_profile:user_profiles!repair_cases_created_by_fkey(*), assigned_to_profile:user_profiles!repair_cases_assigned_to_fkey(*), closed_by_profile:user_profiles!repair_cases_closed_by_fkey(*)')
+      .select('*, asset:assets(*, vendor:vendor_id(*, vendor_group:vendor_groups(*))), created_by_profile:user_profiles!repair_cases_created_by_fkey(*), assigned_to_profile:user_profiles!repair_cases_assigned_to_fkey(*), closed_by_profile:user_profiles!repair_cases_closed_by_fkey(*)')
       .eq('id', id)
       .single()
 
@@ -112,7 +113,12 @@ export default function CaseDetailPage() {
     setCase(rc)
 
     if ((rc as any).asset) setAsset((rc as any).asset as Asset)
-    if ((rc as any).asset?.vendor) setVendor((rc as any).asset.vendor as Vendor)
+    if ((rc as any).asset?.vendor) {
+      setVendor((rc as any).asset.vendor as Vendor)
+      if ((rc as any).asset.vendor.vendor_group) {
+        setVendorGroup((rc as any).asset.vendor.vendor_group as { id: string; name: string })
+      }
+    }
 
     // Attachments
     const { data: atts } = await supabase.from('case_attachments').select('*').eq('case_id', id).order('created_at', { ascending: true })
@@ -134,9 +140,17 @@ export default function CaseDetailPage() {
       .order('created_at', { ascending: true })
     setComments(cmts as TicketComment[] || [])
 
-    // Vendor staff for assignment
+    // Vendor staff for assignment — load all staff in the vendor group
     if (rc.asset?.vendor_id) {
-      const { data: staff } = await supabase.from('user_profiles').select('*').eq('vendor_id', (rc.asset as any).vendor_id).eq('is_active', true)
+      const vendorData = (rc as any).asset?.vendor
+      const groupId = vendorData?.vendor_group?.id || vendorData?.group_id
+      let staffQuery = supabase.from('user_profiles').select('*').eq('is_active', true).eq('role', 'vendor_staff')
+      if (groupId) {
+        staffQuery = staffQuery.eq('vendor_group_id', groupId)
+      } else {
+        staffQuery = staffQuery.eq('vendor_id', (rc.asset as any).vendor_id)
+      }
+      const { data: staff } = await staffQuery
       setVendorStaff(staff as UserProfile[] || [])
     }
 
@@ -149,7 +163,7 @@ export default function CaseDetailPage() {
   const role = profile?.role ?? null
   const userId = profile?.id ?? ''
   const isOwner = c?.created_by === userId
-  const vendorMatch = vendor?.id ? profile?.vendor_id === vendor.id : false
+  const vendorMatch = !!(vendor?.id && (profile?.vendor_id === vendor.id || (vendorGroup != null && profile?.vendor_group_id === vendorGroup.id)))
 
   const canUpdate = role && userId ? canUpdateCase(role, c?.created_by || '', userId, vendorMatch) : false
   const canClose = role && userId ? canCloseCase(role, c?.created_by || '', userId) : false
@@ -506,7 +520,7 @@ export default function CaseDetailPage() {
             <div className="space-y-2.5 text-sm">
               <div className="flex gap-2"><Monitor className="w-4 h-4 text-gray-400 mt-0.5 shrink-0" /><span className="text-gray-500">เครื่อง:</span><span className="font-medium text-gray-900">{asset?.asset_code || '-'}</span></div>
               {asset?.model && <div className="flex gap-2 ml-6"><span className="text-xs text-gray-400">{asset.model}</span></div>}
-              <div className="flex gap-2"><Building2 className="w-4 h-4 text-gray-400 mt-0.5 shrink-0" /><span className="text-gray-500">ผู้ให้เช่า:</span><span className="font-medium text-gray-900">{vendor?.name || '-'}</span></div>
+              <div className="flex gap-2"><Building2 className="w-4 h-4 text-gray-400 mt-0.5 shrink-0" /><span className="text-gray-500">ผู้ให้เช่า:</span><span className="font-medium text-gray-900">{vendor?.name || '-'}{vendorGroup ? <span className="ml-1.5 px-1.5 py-0.5 rounded-full text-xs bg-blue-100 text-blue-700">{vendorGroup.name}</span> : ''}</span></div>
               <div className="flex gap-2"><MapPin className="w-4 h-4 text-gray-400 mt-0.5 shrink-0" /><span className="text-gray-500">สถานที่รับบริการ:</span><span className="font-medium text-gray-900">{c.service_location || '-'}</span></div>
               <div className="flex gap-2"><Clock className="w-4 h-4 text-gray-400 mt-0.5 shrink-0" /><span className="text-gray-500">แจ้งเมื่อ:</span><span>{formatDateTime(c.created_at)}</span></div>
               {c.assigned_to_profile && <div className="flex gap-2"><UserPlus className="w-4 h-4 text-gray-400 mt-0.5 shrink-0" /><span className="text-gray-500">ช่าง:</span><span className="font-medium text-gray-900">{(c.assigned_to_profile as any).display_name}</span></div>}

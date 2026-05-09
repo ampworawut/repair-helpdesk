@@ -29,7 +29,7 @@ export default function CasesListPage() {
 
   async function loadCases() {
     setLoading(true)
-    let q = supabase.from('repair_cases').select('*, asset:assets(asset_code, model), created_by_profile:user_profiles!repair_cases_created_by_fkey(display_name)')
+    let q = supabase.from('repair_cases').select('*, asset:assets(asset_code, model, vendor:vendor_id(id, name, group_id, vendor_group:vendor_groups(id, name))), created_by_profile:user_profiles!repair_cases_created_by_fkey(display_name)')
 
     if (statusFilter !== 'all') q = q.eq('status', statusFilter)
     if (priorityFilter !== 'all') q = q.eq('priority', priorityFilter)
@@ -106,10 +106,11 @@ export default function CasesListPage() {
                   <th className="px-5 py-3 font-medium">หัวข้อ</th>
                   <th className="px-5 py-3 font-medium">หมวดหมู่</th>
                   <th className="px-5 py-3 font-medium">เครื่อง</th>
-                  <th className="px-5 py-3 font-medium">ผู้แจ้ง</th>
+                  <th className="px-5 py-3 font-medium hidden lg:table-cell">ผู้ให้เช่า</th>
+                  <th className="px-5 py-3 font-medium hidden md:table-cell">ผู้แจ้ง</th>
                   <th className="px-5 py-3 font-medium">สถานะ</th>
                   <th className="px-5 py-3 font-medium">ความเร่งด่วน</th>
-                  <th className="px-5 py-3 font-medium hidden md:table-cell">วันที่</th>
+                  <th className="px-5 py-3 font-medium hidden lg:table-cell">วันที่</th>
                 </tr>
               </thead>
               <tbody className="divide-y">
@@ -127,7 +128,17 @@ export default function CasesListPage() {
                       </span>
                     </td>
                     <td className="px-5 py-3.5 text-gray-600 text-xs font-mono">{(c as any).asset?.asset_code || '-'}</td>
-                    <td className="px-5 py-3.5 text-gray-600">{(c as any).created_by_profile?.display_name || '-'}</td>
+                    <td className="px-5 py-3.5 hidden lg:table-cell">
+                      {(c as any).asset?.vendor ? (
+                        <div className="flex items-center gap-1">
+                          <span className="text-sm text-gray-900">{(c as any).asset.vendor.name}</span>
+                          {(c as any).asset.vendor.vendor_group && (
+                            <span className="px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-blue-100 text-blue-700">{(c as any).asset.vendor.vendor_group.name}</span>
+                          )}
+                        </div>
+                      ) : <span className="text-gray-400">-</span>}
+                    </td>
+                    <td className="px-5 py-3.5 text-gray-600 hidden md:table-cell">{(c as any).created_by_profile?.display_name || '-'}</td>
                     <td className="px-5 py-3.5">
                       <span className={cn('px-2 py-0.5 rounded-full text-xs font-medium', STATUS_COLORS[c.status])}>
                         {STATUS_LABELS[c.status]}
@@ -144,7 +155,7 @@ export default function CasesListPage() {
                   </tr>
                 ))}
                 {filtered.length === 0 && (
-                  <tr><td colSpan={8} className="px-5 py-12 text-center text-gray-400">ไม่พบเคส</td></tr>
+                  <tr><td colSpan={9} className="px-5 py-12 text-center text-gray-400">ไม่พบเคส</td></tr>
                 )}
               </tbody>
             </table>
