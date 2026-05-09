@@ -104,6 +104,7 @@ export const NAV_ITEMS: NavItem[] = [
     children: [
       { href: '/admin/users', label: 'ผู้ใช้งาน', icon: 'Users', roles: ['admin'] },
       { href: '/admin/vendors', label: 'ผู้ให้เช่า', icon: 'Building2', roles: ['admin'] },
+      { href: '/admin/vendor-groups', label: 'กลุ่มบริษัท', icon: 'Network', roles: ['admin'] },
       { href: '/admin/assets', label: 'เครื่องคอมพิวเตอร์', icon: 'Monitor', roles: ['admin'] },
       { href: '/admin/locations', label: 'สถานที่', icon: 'MapPin', roles: ['admin'] },
       { href: '/admin/templates', label: 'เทมเพลต', icon: 'FileText', roles: ['admin'] },

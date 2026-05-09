@@ -2,31 +2,40 @@
 
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase'
-import { Vendor } from '@/types'
+import { Vendor, VendorGroup, VENDOR_TYPE_LABELS, VendorType } from '@/types'
 import { Plus, Trash2, Edit3, Save, X } from 'lucide-react'
+import ConfirmModal from '@/components/ui/confirm-modal'
 import { toast } from 'sonner'
 
 export default function AdminVendorsPage() {
   const [vendors, setVendors] = useState<Vendor[]>([])
+  const [groups, setGroups] = useState<VendorGroup[]>([])
   const [showAdd, setShowAdd] = useState(false)
   const [editing, setEditing] = useState<string | null>(null)
-  const [form, setForm] = useState({ name: '', code: '', contact: '', email: '', phone: '' })
+  const [form, setForm] = useState({ name: '', code: '', contact: '', email: '', phone: '', group_id: '', vendor_type: 'company' as VendorType })
   const [editForm, setEditForm] = useState({ name: '', contact: '', email: '', phone: '' })
   const supabase = createClient()
 
   useEffect(() => { loadData() }, [])
 
   async function loadData() {
-    const { data } = await supabase.from('vendors').select('*').order('created_at', { ascending: false })
-    setVendors(data as Vendor[] || [])
+    const [vRes, gRes] = await Promise.all([
+      supabase.from('vendors').select('*, vendor_group:vendor_groups(*)').order('created_at', { ascending: false }),
+      supabase.from('vendor_groups').select('*').order('name'),
+    ])
+    setVendors(vRes.data as Vendor[] || [])
+    setGroups(gRes.data as VendorGroup[] || [])
   }
 
   async function handleAdd(e: React.FormEvent) {
     e.preventDefault()
-    const { error } = await supabase.from('vendors').insert({ ...form })
+    const insertData = { ...form, group_id: form.group_id || null }
+    delete (insertData as any).vendor_type_only
+    const { error } = await supabase.from('vendors').insert(insertData)
     if (error) { toast.error(error.message); return }
+    toast.success('เพิ่มผู้ให้เช่าเรียบร้อย')
     setShowAdd(false)
-    setForm({ name: '', code: '', contact: '', email: '', phone: '' })
+    setForm({ name: '', code: '', contact: '', email: '', phone: '', group_id: '', vendor_type: 'company' })
     loadData()
   }
 
@@ -66,6 +75,19 @@ export default function AdminVendorsPage() {
           <div className="grid sm:grid-cols-2 gap-4">
             <div><label className="block text-sm font-medium text-gray-700 mb-1">ชื่อบริษัท *</label><input required value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} className="w-full px-4 py-2.5 border rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500" /></div>
             <div><label className="block text-sm font-medium text-gray-700 mb-1">รหัสย่อ</label><input value={form.code} onChange={e => setForm(f => ({ ...f, code: e.target.value }))} className="w-full px-4 py-2.5 border rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500" /></div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">กลุ่มบริษัท</label>
+              <select value={form.group_id} onChange={e => setForm(f => ({ ...f, group_id: e.target.value }))} className="w-full px-4 py-2.5 border rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500">
+                <option value="">— ไม่มีกลุ่ม —</option>
+                {groups.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">ประเภท</label>
+              <select value={form.vendor_type} onChange={e => setForm(f => ({ ...f, vendor_type: e.target.value as VendorType }))} className="w-full px-4 py-2.5 border rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500">
+                {Object.entries(VENDOR_TYPE_LABELS).map(([key, label]) => <option key={key} value={key}>{label}</option>)}
+              </select>
+            </div>
             <div><label className="block text-sm font-medium text-gray-700 mb-1">ผู้ติดต่อ</label><input value={form.contact} onChange={e => setForm(f => ({ ...f, contact: e.target.value }))} className="w-full px-4 py-2.5 border rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500" /></div>
             <div><label className="block text-sm font-medium text-gray-700 mb-1">อีเมล</label><input type="email" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} className="w-full px-4 py-2.5 border rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500" /></div>
             <div><label className="block text-sm font-medium text-gray-700 mb-1">เบอร์โทร</label><input value={form.phone} onChange={e => setForm(f => ({ ...f, phone: e.target.value }))} className="w-full px-4 py-2.5 border rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500" /></div>
@@ -84,10 +106,10 @@ export default function AdminVendorsPage() {
             <thead className="bg-gray-50 text-gray-500 text-left">
               <tr>
                 <th className="px-5 py-3 font-medium">ชื่อบริษัท</th>
+                <th className="px-5 py-3 font-medium">กลุ่ม</th>
+                <th className="px-5 py-3 font-medium">ประเภท</th>
                 <th className="px-5 py-3 font-medium">รหัส</th>
                 <th className="px-5 py-3 font-medium">ผู้ติดต่อ</th>
-                <th className="px-5 py-3 font-medium">อีเมล</th>
-                <th className="px-5 py-3 font-medium">เบอร์โทร</th>
                 <th className="px-5 py-3 font-medium">สถานะ</th>
                 <th className="px-5 py-3 font-medium text-right">จัดการ</th>
               </tr>
@@ -100,15 +122,19 @@ export default function AdminVendorsPage() {
                       ? <input value={editForm.name} onChange={e => setEditForm(f => ({ ...f, name: e.target.value }))} className="px-3 py-1.5 border rounded text-sm w-48" />
                       : <span className="font-medium text-gray-900">{v.name}</span>}
                   </td>
+                  <td className="px-5 py-3.5">
+                    {v.vendor_group
+                      ? <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700">{v.vendor_group.name}</span>
+                      : <span className="text-xs text-gray-400">—</span>}
+                  </td>
+                  <td className="px-5 py-3.5">
+                    <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
+                      {VENDOR_TYPE_LABELS[v.vendor_type] || v.vendor_type}
+                    </span>
+                  </td>
                   <td className="px-5 py-3.5 text-gray-600">{v.code || '-'}</td>
                   <td className="px-5 py-3.5 text-gray-600">
                     {editing === v.id ? <input value={editForm.contact} onChange={e => setEditForm(f => ({ ...f, contact: e.target.value }))} className="px-3 py-1.5 border rounded text-sm w-32" /> : (v.contact || '-')}
-                  </td>
-                  <td className="px-5 py-3.5 text-gray-600">
-                    {editing === v.id ? <input value={editForm.email} onChange={e => setEditForm(f => ({ ...f, email: e.target.value }))} className="px-3 py-1.5 border rounded text-sm w-40" /> : (v.email || '-')}
-                  </td>
-                  <td className="px-5 py-3.5 text-gray-600">
-                    {editing === v.id ? <input value={editForm.phone} onChange={e => setEditForm(f => ({ ...f, phone: e.target.value }))} className="px-3 py-1.5 border rounded text-sm w-28" /> : (v.phone || '-')}
                   </td>
                   <td className="px-5 py-3.5">
                     <button onClick={() => toggleActive(v.id, v.is_active)}

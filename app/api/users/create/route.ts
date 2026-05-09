@@ -3,7 +3,7 @@ import { createClient } from '@supabase/supabase-js'
 
 export async function POST(req: NextRequest) {
   try {
-    const { email, password, display_name, role, vendor_id } = await req.json()
+    const { email, password, display_name, role, vendor_id, vendor_group_id } = await req.json()
 
     if (!email || !password || !display_name || !role) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
@@ -33,6 +33,7 @@ export async function POST(req: NextRequest) {
       display_name,
       role,
       vendor_id: vendor_id || null,
+      vendor_group_id: vendor_group_id || null,
       email,
       is_active: true,
     })

@@ -27,13 +27,25 @@ export type AutoAssignStrategy = 'round_robin' | 'least_tickets' | 'random';
 
 export type ConfirmationStatus = 'pending' | 'confirmed' | 'rejected';
 
+export type VendorType = 'company' | 'subsidiary' | 'alias';
+
 // ── Interfaces ───────────────────────────────────────────────────────
+
+export interface VendorGroup {
+  id: string;
+  name: string;
+  description: string | null;
+  vendors?: Vendor[];
+  created_at: string;
+  updated_at: string;
+}
 
 export interface UserProfile {
   id: string;
   display_name: string;
   role: UserRole;
   vendor_id: string | null;
+  vendor_group_id: string | null;
   email: string | null;
   phone: string | null;
   is_active: boolean;
@@ -50,10 +62,13 @@ export interface Vendor {
   email: string | null;
   phone: string | null;
   is_active: boolean;
+  group_id: string | null;
+  vendor_type: VendorType;
   auto_assign_enabled: boolean;
   max_active_tickets: number;
   auto_assign_strategy: AutoAssignStrategy | null;
   escalation_chain: EscalationChainEntry[] | null;
+  vendor_group?: VendorGroup;
   created_at: string;
   updated_at: string;
 }
@@ -273,4 +288,10 @@ export const CONFIRMATION_STATUS_LABELS: Record<ConfirmationStatus, string> = {
   pending: 'รอยืนยัน',
   confirmed: 'ยืนยันแล้ว',
   rejected: 'ปฏิเสธ',
+};
+
+export const VENDOR_TYPE_LABELS: Record<VendorType, string> = {
+  company: 'บริษัทหลัก',
+  subsidiary: 'บริษัทย่อย',
+  alias: 'ชื่ออื่น/พิมพ์ผิด',
 };

@@ -26,13 +26,14 @@ import {
   Layers,
   FileText,
   UserRound,
+  Network,
 } from 'lucide-react'
 import Link from 'next/link'
 
 const ICON_MAP: Record<string, React.ElementType> = {
   LayoutDashboard, ClipboardList, PlusCircle, Settings,
   Users, Building2, Monitor, MapPin, BarChart3,
-  Layers, FileText,
+  Layers, FileText, Network,
 }
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {

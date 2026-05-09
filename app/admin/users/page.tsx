@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase'
-import { UserProfile, UserRole, ROLE_LABELS } from '@/types'
+import { UserProfile, UserRole, ROLE_LABELS, VendorGroup } from '@/types'
 import { cn, getInitials, formatDateTime } from '@/lib/utils'
 import { Plus, Edit3, Save, X, UserPlus, Lock, Trash2 } from 'lucide-react'
 import ChangePasswordModal from '@/components/admin/change-password-modal'
@@ -14,9 +14,10 @@ const ROLES: UserRole[] = ['admin', 'supervisor', 'helpdesk', 'vendor_staff']
 export default function AdminUsersPage() {
   const [users, setUsers] = useState<UserProfile[]>([])
   const [vendors, setVendors] = useState<{ id: string; name: string }[]>([])
+  const [vendorGroups, setVendorGroups] = useState<VendorGroup[]>([])
   const [profile, setProfile] = useState<UserProfile | null>(null)
   const [editing, setEditing] = useState<string | null>(null)
-  const [editForm, setEditForm] = useState({ display_name: '', role: 'helpdesk' as string, vendor_id: '' })
+  const [editForm, setEditForm] = useState({ display_name: '', role: 'helpdesk' as string, vendor_id: '', vendor_group_id: '' })
 
   // Create form
   const [showCreate, setShowCreate] = useState(false)
@@ -26,6 +27,7 @@ export default function AdminUsersPage() {
     display_name: '',
     role: 'helpdesk' as string,
     vendor_id: '',
+    vendor_group_id: '',
   })
   const [creating, setCreating] = useState(false)
 
@@ -45,6 +47,7 @@ export default function AdminUsersPage() {
     })
     loadUsers()
     supabase.from('vendors').select('id, name').eq('is_active', true).then(({ data }) => setVendors(data || []))
+    supabase.from('vendor_groups').select('*').order('name').then(({ data }) => setVendorGroups(data || []))
   }, [])
 
   async function loadUsers() {
@@ -54,7 +57,7 @@ export default function AdminUsersPage() {
 
   function startEdit(u: UserProfile) {
     setEditing(u.id)
-    setEditForm({ display_name: u.display_name, role: u.role, vendor_id: u.vendor_id || '' })
+    setEditForm({ display_name: u.display_name, role: u.role, vendor_id: u.vendor_id || '', vendor_group_id: u.vendor_group_id || '' })
   }
 
   async function saveEdit(id: string) {
@@ -62,6 +65,7 @@ export default function AdminUsersPage() {
       display_name: editForm.display_name,
       role: editForm.role,
       vendor_id: editForm.vendor_id || null,
+      vendor_group_id: editForm.vendor_group_id || null,
     }).eq('id', id)
     setEditing(null)
     loadUsers()
@@ -73,7 +77,7 @@ export default function AdminUsersPage() {
   }
 
   async function handleCreate() {
-    const { email, password, display_name, role, vendor_id } = createForm
+    const { email, password, display_name, role, vendor_id, vendor_group_id } = createForm
     if (!email || !password || !display_name) return
 
     // Basic validation
@@ -84,7 +88,7 @@ export default function AdminUsersPage() {
       const res = await fetch('/api/users/create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password, display_name, role, vendor_id: vendor_id || null }),
+        body: JSON.stringify({ email, password, display_name, role, vendor_id: vendor_id || null, vendor_group_id: vendor_group_id || null }),
       })
 
       const json = await res.json()
@@ -96,7 +100,7 @@ export default function AdminUsersPage() {
 
       // Success
       setShowCreate(false)
-      setCreateForm({ email: '', password: '', display_name: '', role: 'helpdesk', vendor_id: '' })
+      setCreateForm({ email: '', password: '', display_name: '', role: 'helpdesk', vendor_id: '', vendor_group_id: '' })
       toast.success(`สร้างผู้ใช้ ${display_name} สำเร็จ`)
       loadUsers()
     } catch (err: any) {
@@ -175,7 +179,15 @@ export default function AdminUsersPage() {
               </select>
             </div>
             <div className="sm:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-1">ผู้ให้เช่า (สำหรับ vendor_staff)</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">กลุ่มบริษัท (สำหรับ vendor_staff)</label>
+              <select value={createForm.vendor_group_id} onChange={e => setCreateForm(f => ({ ...f, vendor_group_id: e.target.value }))}
+                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 text-sm bg-white">
+                <option value="">-- ไม่ระบุ --</option>
+                {vendorGroups.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
+              </select>
+            </div>
+            <div className="sm:col-span-2">
+              <label className="block text-sm font-medium text-gray-700 mb-1">ผู้ให้เช่า (สำหรับ vendor_staff — เลือกหรือไม่ก็ได้ถ้ามีกลุ่มแล้ว)</label>
               <select value={createForm.vendor_id} onChange={e => setCreateForm(f => ({ ...f, vendor_id: e.target.value }))}
                 className="w-full px-4 py-2.5 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 text-sm bg-white">
                 <option value="">-- ไม่ระบุ --</option>
@@ -205,7 +217,7 @@ export default function AdminUsersPage() {
                 <th className="px-5 py-3 font-medium">ผู้ใช้</th>
                 <th className="px-5 py-3 font-medium">อีเมล</th>
                 <th className="px-5 py-3 font-medium">บทบาท</th>
-                <th className="px-5 py-3 font-medium">ผู้ให้เช่า</th>
+                <th className="px-5 py-3 font-medium">กลุ่ม/ผู้ให้เช่า</th>
                 <th className="px-5 py-3 font-medium">สถานะ</th>
                 <th className="px-5 py-3 font-medium text-right">จัดการ</th>
               </tr>
@@ -243,12 +255,30 @@ export default function AdminUsersPage() {
                   </td>
                   <td className="px-5 py-3.5 text-gray-600">
                     {editing === u.id ? (
-                      <select value={editForm.vendor_id} onChange={e => setEditForm(f => ({ ...f, vendor_id: e.target.value }))}
-                        className="px-3 py-1.5 border rounded text-sm">
-                        <option value="">-- ไม่ระบุ --</option>
-                        {vendors.map(v => <option key={v.id} value={v.id}>{v.name}</option>)}
-                      </select>
-                    ) : (u.vendor_id ? vendors.find(v => v.id === u.vendor_id)?.name || '-' : '-')}
+                      <div className="space-y-1">
+                        <select value={editForm.vendor_group_id} onChange={e => setEditForm(f => ({ ...f, vendor_group_id: e.target.value }))}
+                          className="w-full px-3 py-1.5 border rounded text-sm">
+                          <option value="">-- กลุ่มบริษัท --</option>
+                          {vendorGroups.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
+                        </select>
+                        <select value={editForm.vendor_id} onChange={e => setEditForm(f => ({ ...f, vendor_id: e.target.value }))}
+                          className="w-full px-3 py-1.5 border rounded text-sm">
+                          <option value="">-- ผู้ให้เช่า --</option>
+                          {vendors.map(v => <option key={v.id} value={v.id}>{v.name}</option>)}
+                        </select>
+                      </div>
+                    ) : (
+                      <div>
+                        {u.vendor_group_id ? (
+                          <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700">
+                            {vendorGroups.find(g => g.id === u.vendor_group_id)?.name || 'กลุ่ม'}
+                          </span>
+                        ) : null}
+                        {u.vendor_id ? (
+                          <span className="text-sm">{vendors.find(v => v.id === u.vendor_id)?.name || '-'}</span>
+                        ) : !u.vendor_group_id ? '-': null}
+                      </div>
+                    )}
                   </td>
                   <td className="px-5 py-3.5">
                     <button onClick={() => toggleActive(u.id, u.is_active)}
