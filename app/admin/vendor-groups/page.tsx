@@ -6,7 +6,7 @@ import {
   VendorGroup, Vendor, VENDOR_TYPE_LABELS, VendorType,
   LineNotifyEvent, LineNotifyConfig, LINE_NOTIFY_EVENT_LABELS,
 } from '@/types'
-import { DEFAULT_CONFIG } from '@/lib/notifications'
+import { DEFAULT_LINE_NOTIFY_CONFIG } from '@/lib/notify-config'
 import { Plus, X, ChevronDown, ChevronRight, Trash2, Bell, MessageCircle, Settings } from 'lucide-react'
 import ConfirmModal from '@/components/ui/confirm-modal'
 import { toast } from 'sonner'
@@ -39,7 +39,7 @@ export default function AdminVendorGroupsPage() {
     const { error } = await supabase.from('vendor_groups').insert({
       name: form.name,
       description: form.description || null,
-      line_notify_config: DEFAULT_CONFIG,
+      line_notify_config: DEFAULT_LINE_NOTIFY_CONFIG,
     })
     if (error) { toast.error(error.message); return }
     toast.success('สร้างกลุ่มบริษัทเรียบร้อย')
@@ -118,7 +118,7 @@ export default function AdminVendorGroupsPage() {
   function toggleNotifyEvent(groupId: string, event: LineNotifyEvent) {
     setGroups(prev => prev.map(g => {
       if (g.id !== groupId) return g
-      const config = { ...(g.line_notify_config || DEFAULT_CONFIG) }
+      const config = { ...(g.line_notify_config || DEFAULT_LINE_NOTIFY_CONFIG) }
       config[event] = !config[event]
       return { ...g, line_notify_config: config }
     }))
@@ -182,7 +182,7 @@ export default function AdminVendorGroupsPage() {
         const groupVendors = vendors.filter(v => v.group_id === group.id)
         const isExpanded = expandedGroups.has(group.id)
         const isConfigOpen = notifyConfigOpen.has(group.id)
-        const config = group.line_notify_config || DEFAULT_CONFIG
+        const config = group.line_notify_config || DEFAULT_LINE_NOTIFY_CONFIG
 
         return (
           <div key={group.id} className="bg-white rounded-xl border overflow-hidden">
