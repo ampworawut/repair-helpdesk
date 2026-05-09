@@ -3,7 +3,7 @@ import { NextResponse, type NextRequest } from 'next/server'
 import type { UserRole } from '@/types'
 
 // Paths that don't require auth
-const PUBLIC_PATHS = ['/login', '/auth/callback']
+const PUBLIC_PATHS = ['/login', '/auth/callback', '/api/line/webhook', '/api/notify']
 
 // Admin-only paths
 const ADMIN_PATHS = ['/admin']
