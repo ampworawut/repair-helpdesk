@@ -225,6 +225,24 @@ export default function CaseDetailPage() {
       old_value: c.status, new_value: newStatus,
       metadata: { old_status: c.status, new_status: newStatus },
     })
+
+    // LINE notification
+    const statusToEvent: Record<string, string> = {
+      in_progress: 'case_in_progress',
+      on_hold: 'case_on_hold',
+      resolved: 'case_resolved',
+      closed: 'case_closed',
+      cancelled: 'case_cancelled',
+    }
+    const event = statusToEvent[newStatus]
+    if (event) {
+      fetch('/api/notify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ caseId: c.id, event }),
+      }).catch(() => {})
+    }
+
     loadData()
   }
 

@@ -136,6 +136,13 @@ export default function NewCasePage() {
         comment: 'สร้างเคส',
       })
 
+      // Notify LINE group (fire-and-forget)
+      fetch('/api/notify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ caseId, event: 'case_created' }),
+      }).catch(() => {})
+
       // 4. Update asset status to 'under_repair'
       if (selectedAsset?.id) {
         await supabase.from('assets').update({ status: 'under_repair' }).eq('id', selectedAsset.id)

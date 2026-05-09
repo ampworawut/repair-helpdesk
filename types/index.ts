@@ -1,6 +1,29 @@
 // types/index.ts — v2.2 schema
 
-// ── Enums / Union types ──────────────────────────────────────────────
+// ── LINE integration types ─────────────────────────────────────────
+
+export type LineNotifyEvent =
+  | 'case_created' | 'case_assigned' | 'case_in_progress' | 'case_on_hold'
+  | 'case_resolved' | 'case_closed' | 'case_cancelled'
+  | 'new_comment' | 'new_attachment'
+  | 'sla_warning' | 'sla_breached' | 'confirmation_requested';
+
+export const LINE_NOTIFY_EVENT_LABELS: Record<LineNotifyEvent, string> = {
+  case_created: 'มีเคสใหม่',
+  case_assigned: 'มอบหมายช่างแล้ว',
+  case_in_progress: 'เริ่มดำเนินการ',
+  case_on_hold: 'พักเคส',
+  case_resolved: 'แก้ไขแล้ว',
+  case_closed: 'ปิดเคส',
+  case_cancelled: 'ยกเลิกเคส',
+  new_comment: 'ความคิดเห็นใหม่',
+  new_attachment: 'แนบไฟล์ใหม่',
+  sla_warning: '⚠️ เตือน SLA ใกล้หมด',
+  sla_breached: '🚨 เกิน SLA แล้ว',
+  confirmation_requested: 'ขอยืนยันการแก้ไข',
+};
+
+export type LineNotifyConfig = Record<LineNotifyEvent, boolean>;
 
 export type UserRole = 'admin' | 'supervisor' | 'helpdesk' | 'vendor_staff';
 
@@ -35,6 +58,8 @@ export interface VendorGroup {
   id: string;
   name: string;
   description: string | null;
+  line_group_id: string | null;
+  line_notify_config: LineNotifyConfig | null;
   vendors?: Vendor[];
   created_at: string;
   updated_at: string;

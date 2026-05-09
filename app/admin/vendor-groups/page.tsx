@@ -2,8 +2,12 @@
 
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase'
-import { VendorGroup, Vendor, VENDOR_TYPE_LABELS, VendorType } from '@/types'
-import { Plus, X, ChevronDown, ChevronRight, GripVertical, Trash2 } from 'lucide-react'
+import {
+  VendorGroup, Vendor, VENDOR_TYPE_LABELS, VendorType,
+  LineNotifyEvent, LineNotifyConfig, LINE_NOTIFY_EVENT_LABELS,
+} from '@/types'
+import { DEFAULT_CONFIG } from '@/lib/notifications'
+import { Plus, X, ChevronDown, ChevronRight, Trash2, Bell, MessageCircle, Settings } from 'lucide-react'
 import ConfirmModal from '@/components/ui/confirm-modal'
 import { toast } from 'sonner'
 
@@ -12,9 +16,11 @@ export default function AdminVendorGroupsPage() {
   const [vendors, setVendors] = useState<Vendor[]>([])
   const [showAdd, setShowAdd] = useState(false)
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set())
+  const [notifyConfigOpen, setNotifyConfigOpen] = useState<Set<string>>(new Set())
   const [form, setForm] = useState({ name: '', description: '' })
   const [assigningGroupId, setAssigningGroupId] = useState<string | null>(null)
   const [deleteConfirm, setDeleteConfirm] = useState<{ type: 'group' | 'vendor'; id: string } | null>(null)
+  const [savingConfig, setSavingConfig] = useState<string | null>(null)
   const supabase = createClient()
 
   useEffect(() => { loadData() }, [])
@@ -30,7 +36,11 @@ export default function AdminVendorGroupsPage() {
 
   async function handleAddGroup(e: React.FormEvent) {
     e.preventDefault()
-    const { error } = await supabase.from('vendor_groups').insert({ name: form.name, description: form.description || null })
+    const { error } = await supabase.from('vendor_groups').insert({
+      name: form.name,
+      description: form.description || null,
+      line_notify_config: DEFAULT_CONFIG,
+    })
     if (error) { toast.error(error.message); return }
     toast.success('สร้างกลุ่มบริษัทเรียบร้อย')
     setShowAdd(false)
@@ -39,9 +49,7 @@ export default function AdminVendorGroupsPage() {
   }
 
   async function handleDeleteGroup(id: string) {
-    // Unassign all vendors first
     await supabase.from('vendors').update({ group_id: null }).eq('group_id', id)
-    // Delete group
     const { error } = await supabase.from('vendor_groups').delete().eq('id', id)
     if (error) { toast.error(error.message); return }
     toast.success('ลบกลุ่มบริษัทเรียบร้อย')
@@ -70,6 +78,21 @@ export default function AdminVendorGroupsPage() {
     loadData()
   }
 
+  async function handleSaveNotifyConfig(groupId: string) {
+    setSavingConfig(groupId)
+    const group = groups.find(g => g.id === groupId)
+    if (!group) return
+
+    const { error } = await supabase
+      .from('vendor_groups')
+      .update({ line_notify_config: group.line_notify_config, line_group_id: group.line_group_id })
+      .eq('id', groupId)
+
+    if (error) { toast.error(error.message)
+    } else { toast.success('บันทึกการตั้งค่าแจ้งเตือนเรียบร้อย') }
+    setSavingConfig(null)
+  }
+
   function toggleExpand(id: string) {
     setExpandedGroups(prev => {
       const next = new Set(prev)
@@ -79,8 +102,29 @@ export default function AdminVendorGroupsPage() {
     })
   }
 
+  function toggleNotifyConfig(id: string) {
+    setNotifyConfigOpen(prev => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+
+  function updateGroup(id: string, updates: Partial<VendorGroup>) {
+    setGroups(prev => prev.map(g => g.id === id ? { ...g, ...updates } : g))
+  }
+
+  function toggleNotifyEvent(groupId: string, event: LineNotifyEvent) {
+    setGroups(prev => prev.map(g => {
+      if (g.id !== groupId) return g
+      const config = { ...(g.line_notify_config || DEFAULT_CONFIG) }
+      config[event] = !config[event]
+      return { ...g, line_notify_config: config }
+    }))
+  }
+
   // Solo vendor = vendor whose group has only them (auto-created self-group)
-  // These should appear as "ungrouped" so admin can merge them into real groups
   const vendorGroupCounts = new Map<string, number>()
   vendors.forEach(v => {
     if (v.group_id) vendorGroupCounts.set(v.group_id, (vendorGroupCounts.get(v.group_id) || 0) + 1)
@@ -88,6 +132,12 @@ export default function AdminVendorGroupsPage() {
   const ungroupedVendors = vendors.filter(v => {
     if (!v.group_id) return true
     return vendorGroupCounts.get(v.group_id) === 1
+  })
+
+  // Group real groups (multi-vendor)
+  const realGroups = groups.filter(g => {
+    const count = vendorGroupCounts.get(g.id) || 0
+    return count > 1 || (count === 1 && g.line_group_id)
   })
 
   return (
@@ -128,9 +178,11 @@ export default function AdminVendorGroupsPage() {
       )}
 
       {/* Groups list */}
-      {groups.map(group => {
+      {realGroups.map(group => {
         const groupVendors = vendors.filter(v => v.group_id === group.id)
         const isExpanded = expandedGroups.has(group.id)
+        const isConfigOpen = notifyConfigOpen.has(group.id)
+        const config = group.line_notify_config || DEFAULT_CONFIG
 
         return (
           <div key={group.id} className="bg-white rounded-xl border overflow-hidden">
@@ -140,9 +192,16 @@ export default function AdminVendorGroupsPage() {
               className="w-full flex items-center gap-3 px-5 py-4 hover:bg-gray-50 transition text-left"
             >
               {isExpanded ? <ChevronDown className="w-5 h-5 text-gray-400" /> : <ChevronRight className="w-5 h-5 text-gray-400" />}
-              <div className="flex-1">
-                <span className="font-semibold text-gray-900">{group.name}</span>
-                {group.description && <span className="text-sm text-gray-500 ml-2">— {group.description}</span>}
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="font-semibold text-gray-900">{group.name}</span>
+                  {group.description && <span className="text-sm text-gray-500">— {group.description}</span>}
+                  {group.line_group_id && (
+                    <span className="flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700">
+                      <MessageCircle className="w-3 h-3" /> LINE
+                    </span>
+                  )}
+                </div>
               </div>
               <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-700">
                 {groupVendors.length} บริษัท
@@ -229,6 +288,78 @@ export default function AdminVendorGroupsPage() {
                     </button>
                   )}
                 </div>
+
+                {/* Divider + LINE Notification Config */}
+                <div className="pt-3 border-t">
+                  {/* LINE Group ID Field */}
+                  <div className="mb-3">
+                    <label className="flex items-center gap-1.5 text-sm font-medium text-gray-700 mb-1">
+                      <MessageCircle className="w-4 h-4 text-green-500" /> LINE Group ID
+                    </label>
+                    <input
+                      type="text"
+                      value={group.line_group_id || ''}
+                      onChange={e => updateGroup(group.id, { line_group_id: e.target.value })}
+                      placeholder="ได้จากการเพิ่มบอทเข้ากลุ่ม LINE"
+                      className="w-full px-3 py-2 border rounded-lg text-sm outline-none focus:ring-2 focus:ring-green-500 font-mono"
+                    />
+                    <p className="text-xs text-gray-400 mt-1">
+                      เพิ่ม @repairdesk_bot เข้ากลุ่ม LINE → ส่งข้อความ → ดู Group ID ใน Webhook Log
+                    </p>
+                  </div>
+
+                  {/* Notification Config Toggle */}
+                  <button
+                    onClick={(e) => { e.stopPropagation(); toggleNotifyConfig(group.id) }}
+                    className="flex items-center gap-2 text-sm font-medium text-gray-700 hover:text-blue-600 transition"
+                  >
+                    {isConfigOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+                    <Bell className="w-4 h-4" />
+                    ตั้งค่าการแจ้งเตือน
+                    <span className="text-xs text-gray-400">
+                      ({Object.values(config).filter(Boolean).length}/{Object.keys(config).length})
+                    </span>
+                  </button>
+
+                  {/* Config checkboxes */}
+                  {isConfigOpen && (
+                    <div className="mt-3 ml-7 p-4 bg-gray-50 rounded-lg space-y-3">
+                      <p className="text-xs text-gray-500 mb-0">
+                        เลือกเหตุการณ์ที่จะส่งแจ้งเตือนไปยัง LINE Group
+                        {group.line_group_id ? '' : ' (ยังไม่ได้ตั้ง LINE Group ID)'}
+                      </p>
+
+                      <div className="grid sm:grid-cols-2 gap-2">
+                        {(Object.entries(LINE_NOTIFY_EVENT_LABELS) as [LineNotifyEvent, string][]).map(([event, label]) => (
+                          <label
+                            key={event}
+                            className="flex items-center gap-2 px-3 py-2 bg-white rounded-lg border cursor-pointer hover:border-blue-300 transition text-sm"
+                          >
+                            <input
+                              type="checkbox"
+                              checked={config[event] !== false}
+                              onChange={() => toggleNotifyEvent(group.id, event)}
+                              className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500"
+                            />
+                            <span className={config[event] ? 'text-gray-900 font-medium' : 'text-gray-400'}>
+                              {label}
+                            </span>
+                          </label>
+                        ))}
+                      </div>
+
+                      <div className="flex justify-end pt-2">
+                        <button
+                          onClick={(e) => { e.stopPropagation(); handleSaveNotifyConfig(group.id) }}
+                          disabled={savingConfig === group.id}
+                          className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700 transition font-medium disabled:opacity-50"
+                        >
+                          {savingConfig === group.id ? 'กำลังบันทึก...' : 'บันทึกการตั้งค่า'}
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
             )}
           </div>
@@ -250,6 +381,12 @@ export default function AdminVendorGroupsPage() {
               </div>
             ))}
           </div>
+        </div>
+      )}
+
+      {realGroups.length === 0 && ungroupedVendors.length === 0 && (
+        <div className="text-center py-12 text-gray-400">
+          <p>ยังไม่มีกลุ่มบริษัท</p>
         </div>
       )}
 
