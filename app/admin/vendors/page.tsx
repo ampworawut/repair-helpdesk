@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase'
 import { Vendor } from '@/types'
 import { Plus, Trash2, Edit3, Save, X } from 'lucide-react'
+import { toast } from 'sonner'
 
 export default function AdminVendorsPage() {
   const [vendors, setVendors] = useState<Vendor[]>([])
@@ -23,7 +24,7 @@ export default function AdminVendorsPage() {
   async function handleAdd(e: React.FormEvent) {
     e.preventDefault()
     const { error } = await supabase.from('vendors').insert({ ...form })
-    if (error) { alert(error.message); return }
+    if (error) { toast.error(error.message); return }
     setShowAdd(false)
     setForm({ name: '', code: '', contact: '', email: '', phone: '' })
     loadData()

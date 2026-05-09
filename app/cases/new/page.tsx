@@ -10,6 +10,7 @@ import AssetAutocomplete from '@/components/cases/asset-autocomplete'
 import { classifyCase } from '@/lib/categories'
 import { ArrowLeft, Upload, X, Image as ImageIcon } from 'lucide-react'
 import Link from 'next/link'
+import { toast } from 'sonner'
 
 export default function NewCasePage() {
   const router = useRouter()
@@ -49,11 +50,11 @@ export default function NewCasePage() {
   function handleFileAdd(e: React.ChangeEvent<HTMLInputElement>) {
     const newFiles = Array.from(e.target.files || [])
     if (files.length + newFiles.length > 10) {
-      alert('แนบรูปได้สูงสุด 10 รูป')
+      toast.warning('แนบรูปได้สูงสุด 10 รูป')
       return
     }
     const valid = newFiles.filter(f => f.size <= 5 * 1024 * 1024)
-    if (valid.length !== newFiles.length) alert('บางไฟล์เกิน 5MB ถูกข้าม')
+    if (valid.length !== newFiles.length) toast.warning('บางไฟล์เกิน 5MB ถูกข้าม')
 
     setFiles(prev => [...prev, ...valid])
     valid.forEach(f => {
@@ -143,7 +144,7 @@ export default function NewCasePage() {
       router.push(`/cases/${caseId}`)
     } catch (err: any) {
       console.error(err)
-      alert('เกิดข้อผิดพลาด: ' + (err.message || 'ไม่สามารถสร้างเคสได้'))
+      toast.error('เกิดข้อผิดพลาด: ' + (err.message || 'ไม่สามารถสร้างเคสได้'))
     } finally {
       setSubmitting(false)
     }

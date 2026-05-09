@@ -9,6 +9,7 @@ import { canManageTemplates } from '@/lib/permissions'
 import { cn } from '@/lib/utils'
 import { Plus, Pencil, Trash2, FileText, X } from 'lucide-react'
 import { toast } from 'sonner'
+import ConfirmModal from '@/components/ui/confirm-modal'
 
 const PRIORITIES: CasePriority[] = ['low', 'medium', 'high', 'critical']
 
@@ -38,6 +39,7 @@ export default function AdminTemplatesPage() {
   const [editingId, setEditingId] = useState<string | null>(null)
   const [form, setForm] = useState<TemplateForm>(emptyForm)
   const [submitting, setSubmitting] = useState(false)
+  const [confirm, setConfirm] = useState<{ title: string; message: string; onConfirm: () => void } | null>(null)
   const supabase = createClient()
   const router = useRouter()
 
@@ -142,20 +144,24 @@ export default function AdminTemplatesPage() {
     setSubmitting(false)
   }
 
-  async function handleDelete(t: TicketTemplate) {
-    if (!confirm(`ต้องการลบเทมเพลต "${t.name}" หรือไม่?`)) return
+  function handleDelete(t: TicketTemplate) {
+    setConfirm({
+      title: 'ยืนยันการลบเทมเพลต',
+      message: `ต้องการลบเทมเพลต "${t.name}" หรือไม่?`,
+      onConfirm: async () => {
+        const { error } = await supabase
+          .from('ticket_templates')
+          .update({ is_active: false })
+          .eq('id', t.id)
 
-    const { error } = await supabase
-      .from('ticket_templates')
-      .update({ is_active: false })
-      .eq('id', t.id)
-
-    if (error) {
-      toast.error('ไม่สามารถลบได้: ' + error.message)
-    } else {
-      toast.success('ลบเทมเพลตสำเร็จ')
-      loadTemplates()
-    }
+        if (error) {
+          toast.error('ไม่สามารถลบได้: ' + error.message)
+        } else {
+          toast.success('ลบเทมเพลตสำเร็จ')
+          loadTemplates()
+        }
+      },
+    })
   }
 
   async function toggleActive(t: TicketTemplate) {
@@ -411,6 +417,16 @@ export default function AdminTemplatesPage() {
           </Dialog.Content>
         </Dialog.Portal>
       </Dialog.Root>
+      {/* Confirm Modal */}
+      {confirm && (
+        <ConfirmModal
+          open={true}
+          onOpenChange={() => setConfirm(null)}
+          title={confirm.title}
+          message={confirm.message}
+          onConfirm={confirm.onConfirm}
+        />
+      )}
     </div>
   )
 }

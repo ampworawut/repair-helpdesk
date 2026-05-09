@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase'
 import { Location } from '@/types'
 import { Plus, Trash2, Edit3, Save, X, GripVertical } from 'lucide-react'
+import ConfirmModal from '@/components/ui/confirm-modal'
+import { toast } from 'sonner'
 
 export default function AdminLocationsPage() {
   const [locations, setLocations] = useState<Location[]>([])
@@ -11,6 +13,7 @@ export default function AdminLocationsPage() {
   const [editing, setEditing] = useState<string | null>(null)
   const [form, setForm] = useState({ name: '', building: '', floor: '' })
   const [editForm, setEditForm] = useState({ name: '', building: '', floor: '' })
+  const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null)
   const supabase = createClient()
 
   useEffect(() => { loadData() }, [])
@@ -46,8 +49,9 @@ export default function AdminLocationsPage() {
   }
 
   async function remove(id: string) {
-    if (!confirm('ลบสถานที่นี้ออกจากระบบ?')) return
-    await supabase.from('locations').delete().eq('id', id)
+    const { error } = await supabase.from('locations').delete().eq('id', id)
+    if (error) { toast.error(error.message); return }
+    toast.success('ลบสถานที่เรียบร้อย')
     loadData()
   }
 
@@ -126,7 +130,7 @@ export default function AdminLocationsPage() {
                     ) : (
                       <div className="flex gap-1 justify-end">
                         <button onClick={() => startEdit(l)} className="p-2 text-gray-400 hover:bg-gray-100 rounded transition"><Edit3 className="w-4 h-4" /></button>
-                        <button onClick={() => remove(l.id)} className="p-2 text-red-400 hover:bg-red-50 rounded transition"><Trash2 className="w-4 h-4" /></button>
+                        <button onClick={() => setDeleteConfirm(l.id)} className="p-2 text-red-400 hover:bg-red-50 rounded transition"><Trash2 className="w-4 h-4" /></button>
                       </div>
                     )}
                   </td>
@@ -137,6 +141,16 @@ export default function AdminLocationsPage() {
           </table>
         </div>
       </div>
+
+      <ConfirmModal
+        open={deleteConfirm !== null}
+        onOpenChange={(open) => { if (!open) setDeleteConfirm(null) }}
+        title="ลบสถานที่"
+        message="ลบสถานที่นี้ออกจากระบบ?"
+        confirmLabel="ลบ"
+        variant="danger"
+        onConfirm={() => { if (deleteConfirm) remove(deleteConfirm); setDeleteConfirm(null) }}
+      />
     </div>
   )
 }

@@ -4,8 +4,10 @@ import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase'
 import { UserProfile, UserRole, ROLE_LABELS } from '@/types'
 import { cn, getInitials, formatDateTime } from '@/lib/utils'
-import { Plus, Edit3, Save, X, UserPlus, KeyRound, Lock, Trash2 } from 'lucide-react'
+import { Plus, Edit3, Save, X, UserPlus, Lock, Trash2 } from 'lucide-react'
 import ChangePasswordModal from '@/components/admin/change-password-modal'
+import ConfirmModal from '@/components/ui/confirm-modal'
+import { toast } from 'sonner'
 
 const ROLES: UserRole[] = ['admin', 'supervisor', 'helpdesk', 'vendor_staff']
 
@@ -29,6 +31,9 @@ export default function AdminUsersPage() {
 
   // Change password
   const [changePassUser, setChangePassUser] = useState<UserProfile | null>(null)
+
+  // Confirm dialog
+  const [confirm, setConfirm] = useState<{ title: string; message: string; variant?: 'danger'; onConfirm: () => void } | null>(null)
 
   const supabase = createClient()
 
@@ -72,7 +77,7 @@ export default function AdminUsersPage() {
     if (!email || !password || !display_name) return
 
     // Basic validation
-    if (password.length < 6) { alert('รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร'); return }
+    if (password.length < 6) { toast.error('รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร'); return }
 
     setCreating(true)
     try {
@@ -84,7 +89,7 @@ export default function AdminUsersPage() {
 
       const json = await res.json()
       if (!res.ok) {
-        alert('สร้างไม่สำเร็จ: ' + (json.error || res.statusText))
+        toast.error('สร้างไม่สำเร็จ: ' + (json.error || res.statusText))
         setCreating(false)
         return
       }
@@ -92,31 +97,36 @@ export default function AdminUsersPage() {
       // Success
       setShowCreate(false)
       setCreateForm({ email: '', password: '', display_name: '', role: 'helpdesk', vendor_id: '' })
-      alert(`✅ สร้างผู้ใช้ ${display_name} สำเร็จ`)
+      toast.success(`สร้างผู้ใช้ ${display_name} สำเร็จ`)
       loadUsers()
     } catch (err: any) {
-      alert('เกิดข้อผิดพลาด: ' + (err.message || 'ไม่สามารถสร้างผู้ใช้ได้'))
+      toast.error('เกิดข้อผิดพลาด: ' + (err.message || 'ไม่สามารถสร้างผู้ใช้ได้'))
     }
     setCreating(false)
   }
 
   async function handleDelete(u: UserProfile) {
-    if (!confirm(`คุณแน่ใจที่จะลบผู้ใช้ "${u.display_name}" (${u.email}) ใช่หรือไม่?\n\n⚠️ การลบนี้ไม่สามารถเรียกคืนได้`)) return
+    setConfirm({
+      title: 'ยืนยันการลบผู้ใช้',
+      message: `คุณแน่ใจที่จะลบผู้ใช้ "${u.display_name}" (${u.email}) ใช่หรือไม่?\n\n⚠️ การลบนี้ไม่สามารถเรียกคืนได้`,
+      variant: 'danger',
+      onConfirm: async () => {
+        const res = await fetch('/api/users/delete', {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId: u.id }),
+        })
 
-    const res = await fetch('/api/users/delete', {
-      method: 'DELETE',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ userId: u.id }),
+        const json = await res.json()
+        if (!res.ok) {
+          toast.error('ลบไม่สำเร็จ: ' + (json.error || res.statusText))
+          return
+        }
+
+        toast.success(`ลบผู้ใช้ "${u.display_name}" เรียบร้อย`)
+        loadUsers()
+      },
     })
-
-    const json = await res.json()
-    if (!res.ok) {
-      alert('ลบไม่สำเร็จ: ' + (json.error || res.statusText))
-      return
-    }
-
-    alert(`✅ ลบผู้ใช้ "${u.display_name}" เรียบร้อย`)
-    loadUsers()
   }
 
   if (!profile || profile.role !== 'admin') return null
@@ -273,6 +283,19 @@ export default function AdminUsersPage() {
           userId={changePassUser.id}
           onClose={() => setChangePassUser(null)}
           onSuccess={() => loadUsers()}
+        />
+      )}
+
+      {/* Confirm Modal */}
+      {confirm && (
+        <ConfirmModal
+          open={true}
+          onOpenChange={() => setConfirm(null)}
+          title={confirm.title}
+          message={confirm.message}
+          variant={confirm.variant || 'default'}
+          confirmLabel={confirm.variant === 'danger' ? 'ลบผู้ใช้' : 'ยืนยัน'}
+          onConfirm={confirm.onConfirm}
         />
       )}
     </div>
