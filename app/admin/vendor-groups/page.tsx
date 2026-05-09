@@ -79,7 +79,16 @@ export default function AdminVendorGroupsPage() {
     })
   }
 
-  const ungroupedVendors = vendors.filter(v => !v.group_id)
+  // Solo vendor = vendor whose group has only them (auto-created self-group)
+  // These should appear as "ungrouped" so admin can merge them into real groups
+  const vendorGroupCounts = new Map<string, number>()
+  vendors.forEach(v => {
+    if (v.group_id) vendorGroupCounts.set(v.group_id, (vendorGroupCounts.get(v.group_id) || 0) + 1)
+  })
+  const ungroupedVendors = vendors.filter(v => {
+    if (!v.group_id) return true
+    return vendorGroupCounts.get(v.group_id) === 1
+  })
 
   return (
     <div className="space-y-6">
