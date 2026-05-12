@@ -9,6 +9,7 @@ import {
 import { DEFAULT_LINE_NOTIFY_CONFIG } from '@/lib/notify-config'
 import { Plus, X, ChevronDown, ChevronRight, Trash2, Bell, MessageCircle, Settings } from 'lucide-react'
 import ConfirmModal from '@/components/ui/confirm-modal'
+import LineGroupListener from '@/components/line-group-listener'
 import { toast } from 'sonner'
 
 export default function AdminVendorGroupsPage() {
@@ -167,6 +168,9 @@ export default function AdminVendorGroupsPage() {
           <Plus className="w-4 h-4" /> สร้างกลุ่มใหม่
         </button>
       </div>
+
+      {/* LINE Group Listener */}
+      <LineGroupListener />
 
       {showAdd && (
         <form onSubmit={handleAddGroup} className="bg-white rounded-xl border p-6 space-y-4">

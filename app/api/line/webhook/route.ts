@@ -35,6 +35,8 @@ export async function POST(request: NextRequest) {
 
   for (const event of events) {
     try {
+      // Log the event for detection purposes
+      await logWebhookEvent(event);
       await handleEvent(event);
     } catch (err) {
       console.error('[LINE webhook] Event error:', err);
@@ -51,7 +53,13 @@ async function handleEvent(event: LineEvent) {
 
   const lineGroupId = event.source.groupId;
   const vendorGroup = await getVendorGroupByLineId(lineGroupId);
-  if (!vendorGroup) return; // Not a registered helpdesk group
+  if (!vendorGroup) {
+    // Not a registered helpdesk group - provide guidance
+    if (event.message?.type === 'text') {
+      await handleUnregisteredGroup(event, lineGroupId);
+    }
+    return;
+  }
 
   if (event.message.type === 'text') {
     await handleTextMessage(event, vendorGroup);
@@ -115,6 +123,54 @@ async function handleTextMessage(
         '📸 ส่งรูปภาพเพื่อแนบกับเคสล่าสุดของกลุ่มนี้',
       ].join('\n')
     );
+  }
+}
+
+async function logWebhookEvent(event: LineEvent) {
+  const supabase = createClient(true);
+  
+  try {
+    await supabase.from('line_webhook_logs').insert({
+      event_type: event.type,
+      group_id: event.source.groupId,
+      user_id: event.source.userId,
+      message_type: event.message?.type,
+      message_text: event.message?.type === 'text' ? event.message.text : null,
+      processed: false
+    });
+  } catch (err) {
+    console.error('[LINE] Failed to log webhook event:', err);
+  }
+}
+
+async function handleUnregisteredGroup(event: LineEvent, lineGroupId: string) {
+  const text = event.message?.text?.trim().toLowerCase() || '';
+  
+  if (text === '/register' || text === 'register' || text === '/detect') {
+    await sendMessage(
+      lineGroupId,
+      'Please use the dedicated detection endpoint for registration.\n' +
+      'Add @repairdesk_bot to a new group and type /register there.'
+    );
+  } else {
+    await sendMessage(
+      lineGroupId,
+      '🤖 This LINE group is not yet registered with RepairDesk.\n\n' +
+      'To register this group:\n' +
+      '1. Make sure @repairdesk_bot is added to this group\n' +
+      '2. Type /register to start registration\n\n' +
+      'Or contact your administrator to manually add this group ID:\n' +
+      `Group ID: ${lineGroupId}`
+    );
+  }
+}
+
+async function sendMessage(lineGroupId: string, text: string) {
+  try {
+    const { pushToGroup } = await import('@/lib/line');
+    await pushToGroup(lineGroupId, text);
+  } catch (err) {
+    console.error('[LINE] Failed to send message to unregistered group:', err);
   }
 }
 
