@@ -113,6 +113,24 @@ export default function AdminVendorGroupsPage() {
     setSavingConfig(null)
   }
 
+  async function handleSaveLineGroupId(groupId: string) {
+    setSavingConfig(groupId)
+    const group = groups.find(g => g.id === groupId)
+    if (!group) return
+
+    const { error } = await supabase
+      .from('vendor_groups')
+      .update({ line_group_id: group.line_group_id })
+      .eq('id', groupId)
+
+    if (error) { 
+      toast.error(error.message)
+    } else { 
+      toast.success('บันทึก LINE Group ID เรียบร้อย')
+    }
+    setSavingConfig(null)
+  }
+
   function toggleExpand(id: string) {
     setExpandedGroups(prev => {
       const next = new Set(prev)
@@ -315,13 +333,22 @@ export default function AdminVendorGroupsPage() {
                     <label className="flex items-center gap-1.5 text-sm font-medium text-gray-700 mb-1">
                       <MessageCircle className="w-4 h-4 text-green-500" /> LINE Group ID
                     </label>
-                    <input
-                      type="text"
-                      value={group.line_group_id || ''}
-                      onChange={e => updateGroup(group.id, { line_group_id: e.target.value })}
-                      placeholder="ได้จากการเพิ่มบอทเข้ากลุ่ม LINE"
-                      className="w-full px-3 py-2 border rounded-lg text-sm outline-none focus:ring-2 focus:ring-green-500 font-mono"
-                    />
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={group.line_group_id || ''}
+                        onChange={e => updateGroup(group.id, { line_group_id: e.target.value })}
+                        placeholder="ได้จากการเพิ่มบอทเข้ากลุ่ม LINE"
+                        className="flex-1 px-3 py-2 border rounded-lg text-sm outline-none focus:ring-2 focus:ring-green-500 font-mono"
+                      />
+                      <button
+                        onClick={(e) => { e.stopPropagation(); handleSaveLineGroupId(group.id) }}
+                        disabled={savingConfig === group.id}
+                        className="px-4 py-2 bg-green-600 text-white rounded-lg text-sm hover:bg-green-700 transition font-medium disabled:opacity-50"
+                      >
+                        {savingConfig === group.id ? '...' : 'บันทึก'}
+                      </button>
+                    </div>
                     <p className="text-xs text-gray-400 mt-1">
                       เพิ่ม @repairdesk_bot เข้ากลุ่ม LINE → ส่งข้อความ → ดู Group ID ใน Webhook Log
                     </p>
