@@ -48,3 +48,46 @@ export function getInitials(name: string): string {
   }
   return name.substring(0, 2).toUpperCase()
 }
+
+export async function generateCaseNumber(supabase: any): Promise<string> {
+  // Get current year
+  const yy = new Date().getFullYear().toString().slice(-2);
+  
+  // Get the highest case number for this year
+  const { data: cases } = await supabase
+    .from('repair_cases')
+    .select('case_no')
+    .like('case_no', `REP-${yy}-%`)
+    .order('case_no', { ascending: false })
+    .limit(1);
+
+  let nextNumber = 1;
+  
+  if (cases && cases.length > 0) {
+    const lastCaseNo = cases[0].case_no;
+    const match = lastCaseNo.match(new RegExp(`^REP-${yy}-(\\d+)$`));
+    
+    if (match) {
+      nextNumber = parseInt(match[1]) + 1;
+    } else {
+      // Handle cases with non-standard format
+      const { data: allCases } = await supabase
+        .from('repair_cases')
+        .select('case_no')
+        .like('case_no', `REP-${yy}-%`);
+      
+      if (allCases) {
+        const numbers = allCases
+          .map((c: any) => {
+            const numMatch = c.case_no.match(new RegExp(`^REP-${yy}-(\\d+)$`));
+            return numMatch ? parseInt(numMatch[1]) : 0;
+          })
+          .filter((n: number) => n > 0);
+        
+        nextNumber = Math.max(...numbers, 0) + 1;
+      }
+    }
+  }
+
+  return `REP-${yy}-${nextNumber.toString().padStart(4, '0')}`;
+}

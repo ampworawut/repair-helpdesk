@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
 import { Asset, UserProfile } from '@/types'
-import { cn } from '@/lib/utils'
+import { cn, generateCaseNumber } from '@/lib/utils'
 import LocationPicker from '@/components/cases/location-picker'
 import AssetAutocomplete from '@/components/cases/asset-autocomplete'
 import { classifyCase } from '@/lib/categories'
@@ -89,18 +89,25 @@ export default function NewCasePage() {
       // 1. Classify
       const category = classifyCase(form.title, form.description)
 
-      // 2. Create case
+      // 2. Create case - handle helpdesk users with manual case number
+      let caseData: any = {
+        asset_id: selectedAsset?.id || null,
+        title: form.title,
+        description: form.description || null,
+        priority: form.priority,
+        category,
+        service_location: form.serviceLocation,
+        created_by: profile.id,
+      };
+
+      // For helpdesk users, generate case number client-side to avoid trigger issues
+      if (profile.role === 'helpdesk') {
+        caseData.case_no = await generateCaseNumber(supabase);
+      }
+
       const { data: newCase, error: caseError } = await supabase
         .from('repair_cases')
-        .insert({
-          asset_id: selectedAsset?.id || null,
-          title: form.title,
-          description: form.description || null,
-          priority: form.priority,
-          category,
-          service_location: form.serviceLocation,
-          created_by: profile.id,
-        })
+        .insert(caseData)
         .select('id')
         .single()
 

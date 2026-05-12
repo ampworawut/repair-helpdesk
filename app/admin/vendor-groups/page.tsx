@@ -36,16 +36,21 @@ export default function AdminVendorGroupsPage() {
 
   async function handleAddGroup(e: React.FormEvent) {
     e.preventDefault()
-    const { error } = await supabase.from('vendor_groups').insert({
+    const { data: newGroup, error } = await supabase.from('vendor_groups').insert({
       name: form.name,
       description: form.description || null,
       line_notify_config: DEFAULT_LINE_NOTIFY_CONFIG,
-    })
+    }).select('*').single()
+    
     if (error) { toast.error(error.message); return }
     toast.success('สร้างกลุ่มบริษัทเรียบร้อย')
     setShowAdd(false)
     setForm({ name: '', description: '' })
-    loadData()
+    
+    // Update UI immediately instead of reloading
+    if (newGroup) {
+      setGroups(prev => [...prev, newGroup as VendorGroup])
+    }
   }
 
   async function handleDeleteGroup(id: string) {
@@ -53,7 +58,9 @@ export default function AdminVendorGroupsPage() {
     const { error } = await supabase.from('vendor_groups').delete().eq('id', id)
     if (error) { toast.error(error.message); return }
     toast.success('ลบกลุ่มบริษัทเรียบร้อย')
-    loadData()
+    
+    // Update UI immediately
+    setGroups(prev => prev.filter(g => g.id !== id))
   }
 
   async function handleAssignVendor(vendorId: string, groupId: string) {
@@ -61,21 +68,33 @@ export default function AdminVendorGroupsPage() {
     if (error) { toast.error(error.message); return }
     toast.success('เพิ่มบริษัทเข้ากลุ่มเรียบร้อย')
     setAssigningGroupId(null)
-    loadData()
+    
+    // Update vendors list immediately
+    setVendors(prev => prev.map(v => 
+      v.id === vendorId ? { ...v, group_id: groupId } : v
+    ))
   }
 
   async function handleUnassignVendor(vendorId: string) {
     const { error } = await supabase.from('vendors').update({ group_id: null }).eq('id', vendorId)
     if (error) { toast.error(error.message); return }
     toast.success('ถอดบริษัทออกจากกลุ่มเรียบร้อย')
-    loadData()
+    
+    // Update vendors list immediately
+    setVendors(prev => prev.map(v => 
+      v.id === vendorId ? { ...v, group_id: null } : v
+    ))
   }
 
   async function handleUpdateVendorType(vendorId: string, vendorType: VendorType) {
     const { error } = await supabase.from('vendors').update({ vendor_type: vendorType }).eq('id', vendorId)
     if (error) { toast.error(error.message); return }
     toast.success('อัปเดตประเภทเรียบร้อย')
-    loadData()
+    
+    // Update vendors list immediately
+    setVendors(prev => prev.map(v => 
+      v.id === vendorId ? { ...v, vendor_type: vendorType } : v
+    ))
   }
 
   async function handleSaveNotifyConfig(groupId: string) {
@@ -124,21 +143,17 @@ export default function AdminVendorGroupsPage() {
     }))
   }
 
-  // Solo vendor = vendor whose group has only them (auto-created self-group)
+  // Count vendors per group for display purposes
   const vendorGroupCounts = new Map<string, number>()
   vendors.forEach(v => {
     if (v.group_id) vendorGroupCounts.set(v.group_id, (vendorGroupCounts.get(v.group_id) || 0) + 1)
   })
-  const ungroupedVendors = vendors.filter(v => {
-    if (!v.group_id) return true
-    return vendorGroupCounts.get(v.group_id) === 1
-  })
+  
+  // Ungrouped vendors are those without a group assignment
+  const ungroupedVendors = vendors.filter(v => !v.group_id)
 
-  // Group real groups (multi-vendor)
-  const realGroups = groups.filter(g => {
-    const count = vendorGroupCounts.get(g.id) || 0
-    return count > 1 || (count === 1 && g.line_group_id)
-  })
+  // Show all vendor groups in admin UI
+  const realGroups = groups;
 
   return (
     <div className="space-y-6">
