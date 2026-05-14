@@ -168,18 +168,58 @@ export default function CaseDetailPage() {
     // Activity log
     const { data: acts } = await supabase
       .from('case_activity_log')
-      .select('*, user_profile:user_id(*)')
+      .select('*')
       .eq('case_id', id)
       .order('created_at', { ascending: true })
-    setActivities(acts as unknown as CaseActivity[] || [])
+
+    const actsData = acts as unknown as CaseActivity[] || []
+
+    // Fetch user profiles for activity log separately
+    if (actsData.length > 0) {
+      const actUserIds = [...new Set(actsData.map(a => a.user_id).filter(Boolean))] as string[]
+      if (actUserIds.length > 0) {
+        const { data: actUsers } = await supabase
+          .from('user_profiles')
+          .select('id, display_name')
+          .in('id', actUserIds)
+        if (actUsers) {
+          const actUserMap = new Map(actUsers.map(u => [u.id, u]))
+          for (const act of actsData) {
+            ;(act as any).user_profile = actUserMap.get(act.user_id) || null
+          }
+        }
+      }
+    }
+
+    setActivities(actsData)
 
     // Ticket comments
     const { data: cmts } = await supabase
       .from('ticket_comments')
-      .select('*, author:user_profiles!ticket_comments_author_id_fkey(display_name)')
+      .select('*')
       .eq('case_id', id)
       .order('created_at', { ascending: true })
-    setComments(cmts as TicketComment[] || [])
+
+    const commentsData = cmts as TicketComment[] || []
+
+    // Fetch author profiles separately
+    if (commentsData.length > 0) {
+      const authorIds = [...new Set(commentsData.map(c => c.author_id).filter(Boolean))] as string[]
+      if (authorIds.length > 0) {
+        const { data: authors } = await supabase
+          .from('user_profiles')
+          .select('id, display_name')
+          .in('id', authorIds)
+        if (authors) {
+          const authorMap = new Map(authors.map(a => [a.id, a]))
+          for (const cmt of commentsData) {
+            ;(cmt as any).author = authorMap.get(cmt.author_id) || null
+          }
+        }
+      }
+    }
+
+    setComments(commentsData)
 
     // Vendor staff for assignment — load all staff in the vendor group
     if (rc.asset?.vendor_id) {
