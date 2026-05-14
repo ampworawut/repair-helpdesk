@@ -101,22 +101,63 @@ export default function CaseDetailPage() {
     const { data: prof } = await supabase.from('user_profiles').select('*').eq('id', sessionData.session.user.id).single()
     setProfile(prof as UserProfile)
 
-    // Case + asset + vendor + vendor group
-    const { data: caseData } = await supabase
+    // Fetch case first (no joins to avoid RLS cascade failures)
+    const { data: caseData, error: caseError } = await supabase
       .from('repair_cases')
-      .select('*, asset:assets(*, vendor:vendor_id(*, vendor_group:vendor_groups(*))), created_by_profile:user_profiles!repair_cases_created_by_fkey(*), assigned_to_profile:user_profiles!repair_cases_assigned_to_fkey(*), closed_by_profile:user_profiles!repair_cases_closed_by_fkey(*)')
+      .select('*')
       .eq('id', id)
       .single()
+
+    console.log('caseData:', caseData, 'caseError:', caseError)
 
     if (!caseData) { setLoading(false); return }
     const rc = caseData as unknown as RepairCase
     setCase(rc)
 
-    if ((rc as any).asset) setAsset((rc as any).asset as Asset)
-    if ((rc as any).asset?.vendor) {
-      setVendor((rc as any).asset.vendor as Vendor)
-      if ((rc as any).asset.vendor.vendor_group) {
-        setVendorGroup((rc as any).asset.vendor.vendor_group as { id: string; name: string })
+    // Fetch asset separately
+    if (rc.asset_id) {
+      const { data: assetData } = await supabase
+        .from('assets')
+        .select('*')
+        .eq('id', rc.asset_id)
+        .single()
+      if (assetData) {
+        setAsset(assetData as Asset)
+        // Fetch vendor for this asset
+        if ((assetData as any).vendor_id) {
+          const { data: vendorData } = await supabase
+            .from('vendors')
+            .select('*')
+            .eq('id', (assetData as any).vendor_id)
+            .single()
+          if (vendorData) {
+            setVendor(vendorData as unknown as Vendor)
+            // Fetch vendor group separately
+            if ((vendorData as any).group_id) {
+              const { data: vgData } = await supabase
+                .from('vendor_groups')
+                .select('*')
+                .eq('id', (vendorData as any).group_id)
+                .single()
+              if (vgData) setVendorGroup(vgData as { id: string; name: string })
+            }
+          }
+        }
+      }
+    }
+
+    // Fetch related user profiles separately
+    const profileIds = [rc.created_by, rc.assigned_to, rc.closed_by].filter(Boolean) as string[]
+    if (profileIds.length > 0) {
+      const { data: relatedProfiles } = await supabase
+        .from('user_profiles')
+        .select('*')
+        .in('id', profileIds)
+      if (relatedProfiles) {
+        const profileMap = new Map(relatedProfiles.map(p => [p.id, p]))
+        ;(rc as any).created_by_profile = profileMap.get(rc.created_by) || null
+        ;(rc as any).assigned_to_profile = profileMap.get(rc.assigned_to || '') || null
+        ;(rc as any).closed_by_profile = profileMap.get(rc.closed_by || '') || null
       }
     }
 
