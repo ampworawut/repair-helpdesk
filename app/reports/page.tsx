@@ -117,11 +117,11 @@ export default function ReportsPage() {
   /* ─── LINE Message Statistics ─── */
   function lineMessageStats() {
     const currentMonth = new Date().toLocaleDateString('th-TH', { year: 'numeric', month: '2-digit' })
-    
-    // Count messages for current month
+
+    // Count outgoing push messages for current month (free account limit applies to outgoing)
     const monthlyMessages = lineMessages.filter(msg => {
       const msgMonth = new Date(msg.received_at).toLocaleDateString('th-TH', { year: 'numeric', month: '2-digit' })
-      return msgMonth === currentMonth
+      return msgMonth === currentMonth && msg.event_type === 'outgoing_message'
     }).length
 
     // Free account limit (200 messages/month for LINE)

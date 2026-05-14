@@ -29,6 +29,22 @@ export async function pushToGroup(
       messages: [{ type: 'text', text }],
     });
     console.log(`[LINE] Push OK → ${lineGroupId} (${text.slice(0, 60)}...)`);
+
+    // Log outgoing message for statistics
+    try {
+      const { createClient } = await import('@/lib/supabase-server');
+      const supabase = createClient(true);
+      await supabase.from('line_webhook_logs').insert({
+        event_type: 'outgoing_message',
+        group_id: lineGroupId,
+        message_type: 'text',
+        message_text: text.slice(0, 500),
+        processed: true,
+      });
+    } catch (logErr) {
+      console.error('[LINE] Failed to log outgoing message:', logErr);
+    }
+
     return true;
   } catch (err: any) {
     const msg = err instanceof HTTPFetchError
