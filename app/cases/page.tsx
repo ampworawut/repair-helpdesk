@@ -29,13 +29,63 @@ export default function CasesListPage() {
 
   async function loadCases() {
     setLoading(true)
-    let q = supabase.from('repair_cases').select('*, asset:assets(asset_code, model, vendor:vendor_id(id, name, group_id, vendor_group:vendor_groups(id, name))), created_by_profile:user_profiles!repair_cases_created_by_fkey(display_name)')
+    let q = supabase.from('repair_cases').select('*')
 
     if (statusFilter !== 'all') q = q.eq('status', statusFilter)
     if (priorityFilter !== 'all') q = q.eq('priority', priorityFilter)
 
     const { data } = await q.order('created_at', { ascending: false }).limit(100)
-    setCases(data as unknown as RepairCase[] || [])
+    const casesData = data as unknown as RepairCase[] || []
+
+    // Fetch assets and profiles separately
+    if (casesData.length > 0) {
+      const assetIds = casesData.map(c => c.asset_id).filter(Boolean) as string[]
+      const userIds = casesData.map(c => c.created_by).filter(Boolean) as string[]
+
+      const [assetResult, profileResult] = await Promise.all([
+        assetIds.length > 0
+          ? supabase.from('assets').select('id, asset_code, model, vendor_id').in('id', assetIds)
+          : Promise.resolve({ data: [] }),
+        userIds.length > 0
+          ? supabase.from('user_profiles').select('display_name, id').in('id', userIds)
+          : Promise.resolve({ data: [] }),
+      ])
+
+      const assetMap = new Map((assetResult.data || []).map(a => [a.id, a]))
+      const profileMap = new Map((profileResult.data || []).map(p => [p.id, p]))
+
+      // Fetch vendors for assets
+      const vendorIds = [...new Set((assetResult.data || []).map(a => (a as any).vendor_id).filter(Boolean))] as string[]
+      let vendorMap = new Map()
+      if (vendorIds.length > 0) {
+        const { data: vendors } = await supabase.from('vendors').select('id, name, group_id').in('id', vendorIds)
+        if (vendors) {
+          // Fetch vendor groups
+          const groupIds = [...new Set(vendors.map(v => (v as any).group_id).filter(Boolean))] as string[]
+          let groupMap = new Map()
+          if (groupIds.length > 0) {
+            const { data: groups } = await supabase.from('vendor_groups').select('id, name').in('id', groupIds)
+            if (groups) groupMap = new Map(groups.map(g => [g.id, g]))
+          }
+          vendorMap = new Map(vendors.map(v => {
+            const vendor = { ...v, vendor_group: groupMap.get((v as any).group_id) || null }
+            return [v.id, vendor]
+          }))
+        }
+      }
+
+      // Attach to cases
+      for (const c of casesData) {
+        const asset = assetMap.get(c.asset_id) || null
+        if (asset && vendorMap.has((asset as any).vendor_id)) {
+          (asset as any).vendor = vendorMap.get((asset as any).vendor_id)
+        }
+        ;(c as any).asset = asset
+        ;(c as any).created_by_profile = profileMap.get(c.created_by) || null
+      }
+    }
+
+    setCases(casesData)
     setLoading(false)
   }
 
