@@ -267,6 +267,25 @@ export default function CaseDetailPage() {
       metadata: { old_status: c.status, new_status: newStatus },
     })
 
+    // Add status change comment
+    const statusMessage: Record<string, string> = {
+      responded: '📌 รับเรื่องแล้ว',
+      in_progress: '🔧 กำลังดำเนินการ',
+      on_hold: '⏸️ พักเคส',
+      resolved: '✅ แจ้งแก้ไขแล้ว',
+      closed: '🔒 ปิดเคส',
+      cancelled: '❌ ยกเลิกเคส',
+    }
+    const msg = statusMessage[newStatus]
+    if (msg) {
+      await supabase.from('ticket_comments').insert({
+        case_id: c.id,
+        author_id: userId,
+        content: msg,
+        is_internal: false,
+      })
+    }
+
     // LINE notification
     const statusToEvent: Record<string, string> = {
       in_progress: 'case_in_progress',
