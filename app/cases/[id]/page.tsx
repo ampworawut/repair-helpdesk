@@ -20,6 +20,7 @@ import {
   CheckCircle2, XCircle, AlertTriangle, ExternalLink, Download,
   PauseCircle, PlayCircle, ShieldAlert, MessageSquare, Pencil,
 } from 'lucide-react'
+import ConfirmModal from '@/components/ui/confirm-modal'
 
 /* ── Status Flow (valid transitions) ── */
 const STATUS_FLOW: Record<CaseStatus, CaseStatus[]> = {
@@ -76,6 +77,9 @@ export default function CaseDetailPage() {
   const [showStatusMenu, setShowStatusMenu] = useState(false)
   const [showAssign, setShowAssign] = useState(false)
   const [showCategoryEdit, setShowCategoryEdit] = useState(false)
+
+  // Confirm modal for status change
+  const [confirmStatus, setConfirmStatus] = useState<{ newStatus: CaseStatus; title: string; message: string } | null>(null)
 
   // Vendor staff list (for assignment)
   const [vendorStaff, setVendorStaff] = useState<UserProfile[]>([])
@@ -806,7 +810,22 @@ export default function CaseDetailPage() {
                     {showStatusMenu && (
                       <div className="absolute top-full mt-1 left-0 bg-white border rounded-lg shadow-lg z-20 py-1 min-w-[160px]">
                         {STATUS_FLOW[c.status].map(s => (
-                          <button key={s} type="button" onClick={() => changeStatus(s)}
+                          <button key={s} type="button" onClick={() => {
+                            setShowStatusMenu(false)
+                            const statusMessages: Record<string, string> = {
+                              responded: 'คุณต้องการตอบรับเคสนี้ใช่หรือไม่?',
+                              in_progress: 'คุณต้องการเริ่มดำเนินการเคสนี้ใช่หรือไม่?',
+                              on_hold: 'คุณต้องการพักเคสนี้ใช่หรือไม่? SLA จะหยุดนับชั่วคราว',
+                              resolved: 'คุณต้องการแจ้งว่าแก้ไขแล้วใช่หรือไม่?',
+                              closed: 'คุณต้องการปิดเคสนี้ใช่หรือไม่?',
+                              cancelled: 'คุณต้องการยกเลิกเคสนี้ใช่หรือไม่? การดำเนินการนี้ไม่สามารถย้อนกลับได้',
+                            }
+                            setConfirmStatus({
+                              newStatus: s,
+                              title: STATUS_ACTION_LABELS[s],
+                              message: statusMessages[s] || `เปลี่ยนสถานะเป็น ${STATUS_LABELS[s]}`,
+                            })
+                          }}
                             className="w-full text-left px-4 py-2.5 text-sm hover:bg-gray-50 transition flex items-center gap-2">
                             {s === 'closed' ? <CheckCircle2 className="w-4 h-4 text-green-600" /> :
                              s === 'cancelled' ? <XCircle className="w-4 h-4 text-red-500" /> :
@@ -871,6 +890,20 @@ export default function CaseDetailPage() {
           <div className="absolute bottom-4 text-white text-sm">{lightboxIdx + 1} / {attachments.length} — {attachments[lightboxIdx].file_name}</div>
         </div>
       )}
+
+      {/* Confirm Status Change Modal */}
+      <ConfirmModal
+        open={confirmStatus !== null}
+        onOpenChange={(open) => { if (!open) setConfirmStatus(null) }}
+        title={confirmStatus?.title || ''}
+        message={confirmStatus?.message || ''}
+        variant={confirmStatus?.newStatus === 'cancelled' ? 'danger' : 'default'}
+        confirmLabel="ยืนยัน"
+        onConfirm={() => {
+          if (confirmStatus) changeStatus(confirmStatus.newStatus)
+          setConfirmStatus(null)
+        }}
+      />
     </div>
   )
 }
