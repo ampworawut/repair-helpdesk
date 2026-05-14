@@ -39,8 +39,18 @@ const STATUS_ACTION_LABELS: Record<CaseStatus, string> = {
   in_progress: 'แจ้งแก้ไขแล้ว',
   on_hold:    'พักเคส',
   resolved:   'ปิดเคส',
-  closed:     '-',
-  cancelled:  '-',
+  closed:     'ปิดเคสแล้ว',
+  cancelled:  'ยกเลิกแล้ว',
+}
+
+/* ── Target status labels for dropdown ── */
+const TARGET_STATUS_LABELS: Record<string, string> = {
+  responded:   '📌 ตอบรับเคส',
+  in_progress: '🔧 เริ่มดำเนินการ',
+  on_hold:     '⏸️ พักเคส',
+  resolved:    '✅ แจ้งแก้ไขแล้ว',
+  closed:      '🔒 ปิดเคส',
+  cancelled:   '❌ ยกเลิกเคส',
 }
 
 /* ── Page ── */
@@ -832,7 +842,7 @@ export default function CaseDetailPage() {
                              s === 'on_hold' ? <PauseCircle className="w-4 h-4 text-amber-600" /> :
                              s === 'in_progress' ? <PlayCircle className="w-4 h-4 text-purple-600" /> :
                              <Clock className="w-4 h-4 text-blue-600" />}
-                            {STATUS_ACTION_LABELS[s]}
+                            {TARGET_STATUS_LABELS[s] || STATUS_LABELS[s]}
                           </button>
                         ))}
                       </div>
