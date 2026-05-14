@@ -58,19 +58,9 @@ export default function CasesListPage() {
       const vendorIds = [...new Set((assetResult.data || []).map(a => (a as any).vendor_id).filter(Boolean))] as string[]
       let vendorMap = new Map()
       if (vendorIds.length > 0) {
-        const { data: vendors } = await supabase.from('vendors').select('id, name, group_id').in('id', vendorIds)
+        const { data: vendors } = await supabase.from('vendors').select('id, name').in('id', vendorIds)
         if (vendors) {
-          // Fetch vendor groups
-          const groupIds = [...new Set(vendors.map(v => (v as any).group_id).filter(Boolean))] as string[]
-          let groupMap = new Map()
-          if (groupIds.length > 0) {
-            const { data: groups } = await supabase.from('vendor_groups').select('id, name').in('id', groupIds)
-            if (groups) groupMap = new Map(groups.map(g => [g.id, g]))
-          }
-          vendorMap = new Map(vendors.map(v => {
-            const vendor = { ...v, vendor_group: groupMap.get((v as any).group_id) || null }
-            return [v.id, vendor]
-          }))
+          vendorMap = new Map(vendors.map(v => [v.id, v]))
         }
       }
 
@@ -180,12 +170,7 @@ export default function CasesListPage() {
                     <td className="px-5 py-3.5 text-gray-600 text-xs font-mono">{(c as any).asset?.asset_code || '-'}</td>
                     <td className="px-5 py-3.5 hidden lg:table-cell">
                       {(c as any).asset?.vendor ? (
-                        <div className="flex items-center gap-1">
-                          <span className="text-sm text-gray-900">{(c as any).asset.vendor.name}</span>
-                          {(c as any).asset.vendor.vendor_group && (
-                            <span className="px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-blue-100 text-blue-700">{(c as any).asset.vendor.vendor_group.name}</span>
-                          )}
-                        </div>
+                        <span className="text-sm text-gray-900">{(c as any).asset.vendor.name}</span>
                       ) : <span className="text-gray-400">-</span>}
                     </td>
                     <td className="px-5 py-3.5 text-gray-600 hidden md:table-cell">{(c as any).created_by_profile?.display_name || '-'}</td>
