@@ -808,70 +808,70 @@ export default function CaseDetailPage() {
 
           {/* ── Action Row ── */}
           {canUpdate && c.status !== 'closed' && c.status !== 'cancelled' && (
-            <div className="bg-white rounded-xl border p-5">
-              <div className="flex flex-wrap gap-2">
-                {/* Change Status */}
-                {STATUS_FLOW[c.status].length > 0 && (
-                  <div className="relative">
-                    <button onClick={() => setShowStatusMenu(!showStatusMenu)}
-                      className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium text-sm">
-                      {STATUS_ACTION_LABELS[c.status]} <ChevronDown className="w-4 h-4" />
-                    </button>
-                    {showStatusMenu && (
-                      <div className="absolute top-full mt-1 left-0 bg-white border rounded-lg shadow-lg z-20 py-1 min-w-[160px]">
-                        {STATUS_FLOW[c.status].map(s => (
-                          <button key={s} type="button" onClick={() => {
-                            setShowStatusMenu(false)
-                            const statusMessages: Record<string, string> = {
-                              responded: 'คุณต้องการตอบรับเรื่องนี้ใช่หรือไม่?',
-                              in_progress: 'คุณต้องการเริ่มดำเนินการเรื่องนี้ใช่หรือไม่?',
-                              on_hold: 'คุณต้องการพักการดำเนินการเรื่องนี้ใช่หรือไม่? SLA จะหยุดนับชั่วคราว',
-                              resolved: 'คุณต้องการแจ้งว่าดำเนินการเสร็จสิ้นแล้วใช่หรือไม่?',
-                              closed: 'คุณต้องการปิดรายการนี้ใช่หรือไม่?',
-                              cancelled: 'คุณต้องการยกเลิกรายการนี้ใช่หรือไม่? การดำเนินการนี้ไม่สามารถย้อนกลับได้',
-                            }
-                            setConfirmStatus({
-                              newStatus: s,
-                              title: STATUS_ACTION_LABELS[s],
-                              message: statusMessages[s] || `เปลี่ยนสถานะเป็น ${STATUS_LABELS[s]}`,
-                            })
-                          }}
-                            className="w-full text-left px-4 py-2.5 text-sm hover:bg-gray-50 transition flex items-center gap-2">
-                            {s === 'closed' ? <CheckCircle2 className="w-4 h-4 text-green-600" /> :
-                             s === 'cancelled' ? <XCircle className="w-4 h-4 text-red-500" /> :
-                             s === 'on_hold' ? <PauseCircle className="w-4 h-4 text-amber-600" /> :
-                             s === 'in_progress' ? <PlayCircle className="w-4 h-4 text-purple-600" /> :
-                             <Clock className="w-4 h-4 text-blue-600" />}
-                            {TARGET_STATUS_LABELS[s] || STATUS_LABELS[s]}
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                )}
+            <div className="bg-white rounded-xl border p-5 space-y-3">
+              {/* Change Status — full width */}
+              {STATUS_FLOW[c.status].length > 0 && (
+                <div className="relative">
+                  <button onClick={() => setShowStatusMenu(!showStatusMenu)}
+                    className="w-full flex items-center justify-between gap-2 px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium text-sm">
+                    <span>{STATUS_ACTION_LABELS[c.status]}</span>
+                    <ChevronDown className="w-4 h-4" />
+                  </button>
+                  {showStatusMenu && (
+                    <div className="absolute top-full mt-1 left-0 right-0 bg-white border rounded-lg shadow-lg z-20 py-1">
+                      {STATUS_FLOW[c.status].map(s => (
+                        <button key={s} type="button" onClick={() => {
+                          setShowStatusMenu(false)
+                          const statusMessages: Record<string, string> = {
+                            responded: 'คุณต้องการตอบรับเรื่องนี้ใช่หรือไม่?',
+                            in_progress: 'คุณต้องการเริ่มดำเนินการเรื่องนี้ใช่หรือไม่?',
+                            on_hold: 'คุณต้องการพักการดำเนินการเรื่องนี้ใช่หรือไม่? SLA จะหยุดนับชั่วคราว',
+                            resolved: 'คุณต้องการแจ้งว่าดำเนินการเสร็จสิ้นแล้วใช่หรือไม่?',
+                            closed: 'คุณต้องการปิดรายการนี้ใช่หรือไม่?',
+                            cancelled: 'คุณต้องการยกเลิกรายการนี้ใช่หรือไม่? การดำเนินการนี้ไม่สามารถย้อนกลับได้',
+                          }
+                          setConfirmStatus({
+                            newStatus: s,
+                            title: STATUS_ACTION_LABELS[s],
+                            message: statusMessages[s] || `เปลี่ยนสถานะเป็น ${STATUS_LABELS[s]}`,
+                          })
+                        }}
+                          className="w-full text-left px-4 py-2.5 text-sm hover:bg-gray-50 transition flex items-center gap-2">
+                          {s === 'closed' ? <CheckCircle2 className="w-4 h-4 text-green-600" /> :
+                           s === 'cancelled' ? <XCircle className="w-4 h-4 text-red-500" /> :
+                           s === 'on_hold' ? <PauseCircle className="w-4 h-4 text-amber-600" /> :
+                           s === 'in_progress' ? <PlayCircle className="w-4 h-4 text-purple-600" /> :
+                           <Clock className="w-4 h-4 text-blue-600" />}
+                          {TARGET_STATUS_LABELS[s] || STATUS_LABELS[s]}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
 
-                {/* Assign Technician */}
-                {canAssign && vendorStaff.length > 0 && (
-                  <div className="relative">
-                    <button onClick={() => setShowAssign(!showAssign)}
-                      className="flex items-center gap-2 px-4 py-2.5 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition font-medium text-sm">
-                      <UserPlus className="w-4 h-4" /> มอบหมายช่าง
-                    </button>
-                    {showAssign && (
-                      <div className="absolute top-full mt-1 left-0 bg-white border rounded-lg shadow-lg z-20 py-1 min-w-[200px]">
-                        {vendorStaff.map(s => (
-                          <button key={s.id} type="button" onClick={() => handleAssign(s.id)}
-                            className="w-full text-left px-4 py-2.5 text-sm hover:bg-gray-50 transition flex items-center gap-2">
-                            <div className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center text-xs font-semibold">{getInitials(s.display_name)}</div>
-                            {s.display_name}
-                            {c.assigned_to === s.id && <span className="text-green-600 text-xs ml-auto">✓ ปัจจุบัน</span>}
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
+              {/* Assign Technician — secondary */}
+              {canAssign && vendorStaff.length > 0 && (
+                <div className="relative">
+                  <button onClick={() => setShowAssign(!showAssign)}
+                    className="w-full flex items-center justify-between gap-2 px-4 py-2.5 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition font-medium text-sm">
+                    <span className="flex items-center gap-2"><UserPlus className="w-4 h-4" /> มอบหมายช่าง</span>
+                    <ChevronDown className="w-4 h-4" />
+                  </button>
+                  {showAssign && (
+                    <div className="absolute top-full mt-1 left-0 right-0 bg-white border rounded-lg shadow-lg z-20 py-1">
+                      {vendorStaff.map(s => (
+                        <button key={s.id} type="button" onClick={() => handleAssign(s.id)}
+                          className="w-full text-left px-4 py-2.5 text-sm hover:bg-gray-50 transition flex items-center gap-2">
+                          <div className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center text-xs font-semibold">{getInitials(s.display_name)}</div>
+                          {s.display_name}
+                          {c.assigned_to === s.id && <span className="text-green-600 text-xs ml-auto">✓ ปัจจุบัน</span>}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           )}
         </div>
