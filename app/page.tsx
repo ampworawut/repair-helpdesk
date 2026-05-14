@@ -53,7 +53,7 @@ export default function DashboardPage() {
     { label: 'เปิดอยู่', value: counts.pending, icon: Clock, color: 'bg-blue-50 text-blue-700' },
     { label: 'SLA ใกล้หมด', value: counts.slaWarning, icon: AlertTriangle, color: 'bg-yellow-50 text-yellow-700' },
     { label: 'เกินกำหนด', value: counts.breached, icon: TrendingUp, color: 'bg-red-50 text-red-700' },
-    { label: 'พักเคส', value: counts.onHold, icon: PauseCircle, color: 'bg-purple-50 text-purple-700' },
+    { label: 'พักการดำเนินการ', value: counts.onHold, icon: PauseCircle, color: 'bg-purple-50 text-purple-700' },
   ]
 
   return (

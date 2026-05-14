@@ -114,9 +114,9 @@ export default function CasesListPage() {
             <option value="pending">รอตอบรับ</option>
             <option value="responded">รับเรื่องแล้ว</option>
             <option value="in_progress">กำลังดำเนินการ</option>
-            <option value="on_hold">พักเคส</option>
-            <option value="resolved">แก้ไขแล้ว</option>
-            <option value="closed">ปิดเคส</option>
+            <option value="on_hold">พักการดำเนินการ</option>
+            <option value="resolved">ดำเนินการเสร็จสิ้น</option>
+            <option value="closed">ปิดรายการ</option>
             <option value="cancelled">ยกเลิก</option>
           </select>
           <select

@@ -246,9 +246,9 @@ export const STATUS_LABELS: Record<CaseStatus, string> = {
   pending: 'รอตอบรับ',
   responded: 'รับเรื่องแล้ว',
   in_progress: 'กำลังดำเนินการ',
-  on_hold: 'พักเคส',
-  resolved: 'แก้ไขแล้ว',
-  closed: 'ปิดเคส',
+  on_hold: 'พักการดำเนินการ',
+  resolved: 'ดำเนินการเสร็จสิ้น',
+  closed: 'ปิดรายการ',
   cancelled: 'ยกเลิก',
 };
 

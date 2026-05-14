@@ -34,23 +34,23 @@ const STATUS_FLOW: Record<CaseStatus, CaseStatus[]> = {
 }
 
 const STATUS_ACTION_LABELS: Record<CaseStatus, string> = {
-  pending:    'ตอบรับเคส',
+  pending:    'ตอบรับเรื่อง',
   responded:  'เริ่มดำเนินการ',
-  in_progress: 'แจ้งแก้ไขแล้ว',
-  on_hold:    'พักเคส',
-  resolved:   'ปิดเคส',
-  closed:     'ปิดเคสแล้ว',
-  cancelled:  'ยกเลิกแล้ว',
+  in_progress: 'ดำเนินการเสร็จสิ้น',
+  on_hold:    'พักการดำเนินการ',
+  resolved:   'ปิดรายการ',
+  closed:     'ปิดรายการแล้ว',
+  cancelled:  'ยกเลิกรายการแล้ว',
 }
 
 /* ── Target status labels for dropdown ── */
 const TARGET_STATUS_LABELS: Record<string, string> = {
-  responded:   '📌 ตอบรับเคส',
-  in_progress: '🔧 เริ่มดำเนินการ',
-  on_hold:     '⏸️ พักเคส',
-  resolved:    '✅ แจ้งแก้ไขแล้ว',
-  closed:      '🔒 ปิดเคส',
-  cancelled:   '❌ ยกเลิกเคส',
+  responded:   '📌 ตอบรับเรื่อง',
+  in_progress: '🔧 กำลังดำเนินการ',
+  on_hold:     '⏸️ พักการดำเนินการ',
+  resolved:    '✅ ดำเนินการเสร็จสิ้น',
+  closed:      '🔒 ปิดรายการ',
+  cancelled:   '❌ ยกเลิกรายการ',
 }
 
 /* ── Page ── */
@@ -323,12 +323,12 @@ export default function CaseDetailPage() {
 
     // Add status change comment
     const statusMessage: Record<string, string> = {
-      responded: '📌 รับเรื่องแล้ว',
+      responded: '📌 ตอบรับเรื่องแล้ว',
       in_progress: '🔧 กำลังดำเนินการ',
-      on_hold: '⏸️ พักเคส',
-      resolved: '✅ แจ้งแก้ไขแล้ว',
-      closed: '🔒 ปิดเคส',
-      cancelled: '❌ ยกเลิกเคส',
+      on_hold: '⏸️ พักการดำเนินการ',
+      resolved: '✅ ดำเนินการเสร็จสิ้น',
+      closed: '🔒 ปิดรายการ',
+      cancelled: '❌ ยกเลิกรายการ',
     }
     const msg = statusMessage[newStatus]
     if (msg) {
@@ -823,12 +823,12 @@ export default function CaseDetailPage() {
                           <button key={s} type="button" onClick={() => {
                             setShowStatusMenu(false)
                             const statusMessages: Record<string, string> = {
-                              responded: 'คุณต้องการตอบรับเคสนี้ใช่หรือไม่?',
-                              in_progress: 'คุณต้องการเริ่มดำเนินการเคสนี้ใช่หรือไม่?',
-                              on_hold: 'คุณต้องการพักเคสนี้ใช่หรือไม่? SLA จะหยุดนับชั่วคราว',
-                              resolved: 'คุณต้องการแจ้งว่าแก้ไขแล้วใช่หรือไม่?',
-                              closed: 'คุณต้องการปิดเคสนี้ใช่หรือไม่?',
-                              cancelled: 'คุณต้องการยกเลิกเคสนี้ใช่หรือไม่? การดำเนินการนี้ไม่สามารถย้อนกลับได้',
+                              responded: 'คุณต้องการตอบรับเรื่องนี้ใช่หรือไม่?',
+                              in_progress: 'คุณต้องการเริ่มดำเนินการเรื่องนี้ใช่หรือไม่?',
+                              on_hold: 'คุณต้องการพักการดำเนินการเรื่องนี้ใช่หรือไม่? SLA จะหยุดนับชั่วคราว',
+                              resolved: 'คุณต้องการแจ้งว่าดำเนินการเสร็จสิ้นแล้วใช่หรือไม่?',
+                              closed: 'คุณต้องการปิดรายการนี้ใช่หรือไม่?',
+                              cancelled: 'คุณต้องการยกเลิกรายการนี้ใช่หรือไม่? การดำเนินการนี้ไม่สามารถย้อนกลับได้',
                             }
                             setConfirmStatus({
                               newStatus: s,
