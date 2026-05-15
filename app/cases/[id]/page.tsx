@@ -6,7 +6,7 @@ import { createClient } from '@/lib/supabase'
 import { evaluateSLA, formatMet, getEscalationLevel, calculatePausedDuration, adjustDeadlineForPause } from '@/lib/sla'
 import { canCloseCase, canUpdateCase, canAssignTechnician, canChangeCaseOwner, canPauseResumeSLA, canConfirmResolution } from '@/lib/permissions'
 import { cn, formatDateTime, timeAgo, getInitials } from '@/lib/utils'
-import { CATEGORY_LABELS, CATEGORY_COLORS, type CaseCategory } from '@/lib/categories'
+import { CATEGORY_LABELS, CATEGORY_COLORS, type CaseCategory, getMainCategory, getSubCategories, getMainLabel, getMainColor, type CaseMainCategory, MAIN_CATEGORIES } from '@/lib/categories'
 import {
   RepairCase, CaseStatus, CasePriority, UserProfile, CaseAttachment,
   CaseActivity, Asset, Vendor, Location,
@@ -96,7 +96,8 @@ export default function CaseDetailPage() {
 
   // Category editing
   const [editingCategory, setEditingCategory] = useState(false)
-  const [editCategoryValue, setEditCategoryValue] = useState<CaseCategory>('other')
+  const [editMainCategory, setEditMainCategory] = useState<CaseMainCategory>('other')
+  const [editSubCategory, setEditSubCategory] = useState('')
   const CATEGORIES: CaseCategory[] = ['hardware', 'software', 'network', 'printer', 'peripheral', 'account', 'other']
 
   // SLA display — reactive countdown
@@ -443,15 +444,16 @@ export default function CaseDetailPage() {
     loadData()
   }
 
-  async function saveCategory(cat: CaseCategory) {
+  async function saveCategory(main: CaseMainCategory, sub: string) {
     if (!c) return
     setShowCategoryEdit(false)
-    await supabase.from('repair_cases').update({ category: cat }).eq('id', c.id)
+    await supabase.from('repair_cases').update({ category: main, sub_category: sub || null }).eq('id', c.id)
     await supabase.from('case_activity_log').insert({
       case_id: c.id, user_id: profile!.id,
       action: 'category_change',
       old_value: c.category || 'other',
-      new_value: cat,
+      new_value: main,
+      metadata: { sub_category: sub || null },
     })
     loadData()
   }
@@ -524,28 +526,56 @@ export default function CaseDetailPage() {
               {(profile?.role === 'admin' || profile?.role === 'supervisor') ? (
                 <div className="relative">
                   <button
-                    onClick={() => { setShowCategoryEdit(!showCategoryEdit); setEditCategoryValue((c.category as CaseCategory) || 'other') }}
-                    className={cn('px-2.5 py-1 rounded-full text-xs font-semibold cursor-pointer hover:opacity-80 transition', CATEGORY_COLORS[(c.category as CaseCategory) || 'other'])}
+                    onClick={() => {
+                      setShowCategoryEdit(!showCategoryEdit)
+                      setEditMainCategory((c.category as CaseMainCategory) || 'other')
+                      setEditSubCategory((c as any).sub_category || '')
+                    }}
+                    className={cn('px-2.5 py-1 rounded-full text-xs font-semibold cursor-pointer hover:opacity-80 transition', getMainColor((c.category as CaseMainCategory) || 'other'))}
                   >
-                    {CATEGORY_LABELS[(c.category as CaseCategory) || 'other']} ▾
+                    {getMainLabel((c.category as CaseMainCategory) || 'other')}
+                    {(c as any).sub_category ? ` › ${(c as any).sub_category}` : ''} ▾
                   </button>
                   {showCategoryEdit && (
-                    <div className="absolute top-full mt-1 left-0 bg-white border rounded-lg shadow-lg z-20 py-1 min-w-[180px]">
-                      {CATEGORIES.map(cat => (
-                        <button key={cat} type="button" onClick={() => saveCategory(cat)}
-                          className={cn('w-full text-left px-4 py-2 text-sm hover:bg-gray-50 transition flex items-center gap-2',
-                            (c.category || 'other') === cat && 'bg-blue-50 font-medium')}
-                        >
-                          {CATEGORY_LABELS[cat]}
-                          {(c.category || 'other') === cat && <span className="text-blue-600 ml-auto">✓</span>}
-                        </button>
+                    <div className="absolute top-full mt-1 left-0 bg-white border rounded-lg shadow-lg z-20 py-1 min-w-[220px] max-h-[400px] overflow-y-auto">
+                      {MAIN_CATEGORIES.map(main => (
+                        <div key={main.key}>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setEditMainCategory(main.key)
+                              setEditSubCategory('')
+                            }}
+                            className={cn('w-full text-left px-3 py-1.5 text-xs font-semibold uppercase tracking-wide',
+                              editMainCategory === main.key ? 'bg-blue-50 text-blue-700' : 'text-gray-500 hover:bg-gray-50')}
+                          >
+                            {main.emoji} {main.label}
+                          </button>
+                          {editMainCategory === main.key && main.subs.length > 0 && (
+                            <div className="pl-6 pb-1">
+                              {main.subs.map(sub => (
+                                <button
+                                  key={sub}
+                                  type="button"
+                                  onClick={() => { setEditSubCategory(sub); saveCategory(main.key, sub) }}
+                                  className={cn('w-full text-left px-3 py-1.5 text-sm rounded hover:bg-gray-50 transition',
+                                    editSubCategory === sub ? 'bg-blue-50 font-medium text-blue-700' : 'text-gray-700')}
+                                >
+                                  {sub}
+                                  {editSubCategory === sub && <span className="text-blue-600 ml-1">✓</span>}
+                                </button>
+                              ))}
+                            </div>
+                          )}
+                        </div>
                       ))}
                     </div>
                   )}
                 </div>
               ) : (
-                <span className={cn('px-2.5 py-1 rounded-full text-xs font-semibold', CATEGORY_COLORS[(c.category as CaseCategory) || 'other'])}>
-                  {CATEGORY_LABELS[(c.category as CaseCategory) || 'other']}
+                <span className={cn('px-2.5 py-1 rounded-full text-xs font-semibold', getMainColor((c.category as CaseMainCategory) || 'other'))}>
+                  {getMainLabel((c.category as CaseMainCategory) || 'other')}
+                  {(c as any).sub_category ? ` › ${(c as any).sub_category}` : ''}
                 </span>
               )}
               {escalationInfo && (

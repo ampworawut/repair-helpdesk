@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase'
 import { RepairCase, STATUS_LABELS, PRIORITY_LABELS } from '@/types'
 import { formatDateTime } from '@/lib/utils'
+import { getMainLabel, getMainColor, type CaseMainCategory, MAIN_CATEGORIES } from '@/lib/categories'
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
   PieChart, Pie, Cell, LineChart, Line,
@@ -112,6 +113,17 @@ export default function ReportsPage() {
     const map: Record<string, number> = {}
     cases.forEach(c => { map[c.status] = (map[c.status] || 0) + 1 })
     return Object.entries(map).map(([k, v]) => ({ name: STATUS_LABELS[k as keyof typeof STATUS_LABELS] || k, value: v }))
+  }
+
+  /* ─── Category Breakdown ─── */
+  function categoryBreakdown() {
+    const map: Record<string, number> = {}
+    cases.forEach(c => {
+      const main = (c as any).category || 'other'
+      const label = getMainLabel(main as CaseMainCategory)
+      map[label] = (map[label] || 0) + 1
+    })
+    return Object.entries(map).map(([name, value]) => ({ name, value }))
   }
 
   /* ─── LINE Message Statistics ─── */
@@ -296,6 +308,22 @@ export default function ReportsPage() {
             <div className="text-xs text-gray-500 mt-2 text-center">
               Free account limit: 200 messages/month
             </div>
+          </div>
+        )}
+
+        {/* Category Breakdown */}
+        {categoryBreakdown().length > 0 && (
+          <div className="bg-white rounded-xl border p-5">
+            <h3 className="font-semibold text-gray-900 mb-4">📂 หมวดหมู่ปัญหา</h3>
+            <ResponsiveContainer width="100%" height={280}>
+              <PieChart>
+                <Pie data={categoryBreakdown()} dataKey="value" nameKey="name" cx="50%" cy="50%"
+                  outerRadius={100} label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}>
+                  {categoryBreakdown().map((entry, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
+                </Pie>
+                <Tooltip />
+              </PieChart>
+            </ResponsiveContainer>
           </div>
         )}
 
