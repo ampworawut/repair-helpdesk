@@ -55,7 +55,7 @@ function buildMessage(
   };
 
   const priorityEmoji: Record<string, string> = {
-    low: '🟢', medium: '🟡', high: '🟠', critical: '🔴'
+    low: '🟢', critical: '🔴'
   };
 
   let msg = `${emoji[event] || ''} ${label[event] || event}\n\n`;

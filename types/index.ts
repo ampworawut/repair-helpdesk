@@ -29,7 +29,7 @@ export type UserRole = 'admin' | 'supervisor' | 'helpdesk' | 'vendor_staff';
 
 export type CaseStatus = 'pending' | 'responded' | 'in_progress' | 'on_hold' | 'resolved' | 'closed' | 'cancelled';
 
-export type CasePriority = 'low' | 'medium' | 'high' | 'critical';
+export type CasePriority = 'low' | 'critical';
 
 export type AssetStatus = 'available' | 'in_use' | 'pending' | 'under_repair' | 'retired';
 
@@ -254,15 +254,11 @@ export const STATUS_LABELS: Record<CaseStatus, string> = {
 
 export const PRIORITY_LABELS: Record<CasePriority, string> = {
   low: 'ปกติ',
-  medium: 'ปานกลาง',
-  high: 'สูง',
   critical: 'ด่วนมาก',
 };
 
 export const PRIORITY_COLORS: Record<CasePriority, string> = {
   low: 'bg-gray-100 text-gray-700',
-  medium: 'bg-yellow-100 text-yellow-800',
-  high: 'bg-orange-100 text-orange-800',
   critical: 'bg-red-100 text-red-800',
 };
 

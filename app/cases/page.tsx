@@ -126,8 +126,6 @@ export default function CasesListPage() {
           >
             <option value="all">ทุกความเร่งด่วน</option>
             <option value="low">ปกติ</option>
-            <option value="medium">ปานกลาง</option>
-            <option value="high">สูง</option>
             <option value="critical">ด่วนมาก</option>
           </select>
         </div>

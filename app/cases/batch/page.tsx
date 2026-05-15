@@ -29,8 +29,6 @@ type Step = 1 | 2 | 3 | 4
 
 const PRIORITY_OPTIONS: { value: CasePriority; label: string; color: string }[] = [
   { value: 'low', label: 'ปกติ', color: 'bg-gray-100 text-gray-700 border-gray-300' },
-  { value: 'medium', label: 'ปานกลาง', color: 'bg-yellow-50 text-yellow-800 border-yellow-300' },
-  { value: 'high', label: 'สูง', color: 'bg-orange-50 text-orange-800 border-orange-300' },
   { value: 'critical', label: 'ด่วนมาก', color: 'bg-red-50 text-red-800 border-red-300' },
 ]
 
@@ -50,7 +48,7 @@ export default function BatchCasePage() {
   const [showAssetDropdown, setShowAssetDropdown] = useState(false)
 
   // Step 2: Case details
-  const [commonPriority, setCommonPriority] = useState<CasePriority>('medium')
+  const [commonPriority, setCommonPriority] = useState<CasePriority>('low')
   const [batchItems, setBatchItems] = useState<BatchCaseItem[]>([])
 
   // Step 3: Preview (derived)
@@ -815,7 +813,7 @@ export default function BatchCasePage() {
                     setSelectedAssets([])
                     setBatchItems([])
                     setSubmitResults(null)
-                    setCommonPriority('medium')
+                    setCommonPriority('low')
                   }}
                   className="px-6 py-3 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition font-medium"
                 >

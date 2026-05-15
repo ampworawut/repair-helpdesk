@@ -11,7 +11,7 @@ import { Plus, Pencil, Trash2, FileText, X } from 'lucide-react'
 import { toast } from 'sonner'
 import ConfirmModal from '@/components/ui/confirm-modal'
 
-const PRIORITIES: CasePriority[] = ['low', 'medium', 'high', 'critical']
+const PRIORITIES: CasePriority[] = ['low', 'critical']
 
 interface TemplateForm {
   name: string
@@ -26,7 +26,7 @@ const emptyForm: TemplateForm = {
   name: '',
   title_template: '',
   description_template: '',
-  priority: 'medium',
+  priority: 'low',
   category: '',
   is_active: true,
 }

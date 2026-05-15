@@ -27,7 +27,7 @@ export default function NewCasePage() {
     assetCode: '',
     title: '',
     serviceLocation: '',
-    priority: 'medium' as string,
+    priority: 'low' as string,
     description: '',
   })
 
@@ -221,8 +221,6 @@ export default function NewCasePage() {
           <div className="flex gap-2 flex-wrap">
             {[
               { value: 'low', label: 'ปกติ', color: 'bg-gray-100 text-gray-700 border-gray-300' },
-              { value: 'medium', label: 'ปานกลาง', color: 'bg-yellow-50 text-yellow-800 border-yellow-300' },
-              { value: 'high', label: 'สูง', color: 'bg-orange-50 text-orange-800 border-orange-300' },
               { value: 'critical', label: 'ด่วนมาก', color: 'bg-red-50 text-red-800 border-red-300' },
             ].map(p => (
               <button
