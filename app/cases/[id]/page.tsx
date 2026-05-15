@@ -387,6 +387,8 @@ export default function CaseDetailPage() {
         metadata: { content: comment.trim() || 'แนบรูปภาพ' },
       }).select('id').single()
 
+      const activityId = act?.id
+
       // Upload files
       for (const file of updateFiles) {
         const filePath = `${c.id}/${Date.now()}_${file.name}`
@@ -397,6 +399,7 @@ export default function CaseDetailPage() {
           case_id: c.id, file_path: filePath,
           file_name: file.name, file_size: file.size,
           uploaded_by: profile.id,
+          activity_id: activityId || null,
         })
       }
 
@@ -670,28 +673,13 @@ export default function CaseDetailPage() {
 
         {/* ── Right: Timeline + Comments + Actions ── */}
         <div className="lg:col-span-2 space-y-4">
-          {/* Attachments */}
-          {attachments.length > 0 && (
-            <div className="bg-white rounded-xl border p-5">
-              <h3 className="font-semibold text-sm text-gray-500 uppercase tracking-wide mb-3">📸 รูปภาพ ({attachments.length})</h3>
-              <div className="flex flex-wrap gap-2">
-                {attachments.map((att, i) => {
-                  const url = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/repair-attachments/${att.file_path}`
-                  return (
-                    <button key={att.id} onClick={() => setLightboxIdx(i)} className="w-20 h-20 rounded-lg border overflow-hidden hover:ring-2 ring-blue-400 transition group relative">
-                      <img src={url} alt={att.file_name} className="w-full h-full object-cover" loading="lazy" />
-                    </button>
-                  )
-                })}
-              </div>
-            </div>
-          )}
-
           {/* Timeline */}
           <div className="bg-white rounded-xl border p-5">
             <h3 className="font-semibold text-sm text-gray-500 uppercase tracking-wide mb-4">📝 ประวัติ</h3>
             <div className="space-y-4">
-              {activities.map((act) => (
+              {activities.map((act) => {
+                const actAttachments = attachments.filter(a => (a as any).activity_id === act.id)
+                return (
                 <div key={act.id} className="flex gap-3">
                   <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center shrink-0 text-xs font-semibold text-gray-600">
                     {(act as any).user_profile?.display_name ? getInitials((act as any).user_profile.display_name) : '??'}
@@ -702,9 +690,23 @@ export default function CaseDetailPage() {
                       <span className="text-xs text-gray-400">{timeAgo(act.created_at)}</span>
                     </div>
                     {renderActivityContent(act)}
+                    {/* Attachments for this activity */}
+                    {actAttachments.length > 0 && (
+                      <div className="flex flex-wrap gap-2 mt-2">
+                        {actAttachments.map((att, i) => {
+                          const url = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/repair-attachments/${att.file_path}`
+                          const globalIdx = attachments.findIndex(a => a.id === att.id)
+                          return (
+                            <button key={att.id} onClick={() => setLightboxIdx(globalIdx)} className="w-20 h-20 rounded-lg border overflow-hidden hover:ring-2 ring-blue-400 transition group relative">
+                              <img src={url} alt={att.file_name} className="w-full h-full object-cover" loading="lazy" />
+                            </button>
+                          )
+                        })}
+                      </div>
+                    )}
                   </div>
                 </div>
-              ))}
+              )})}
               {activities.length === 0 && <p className="text-sm text-gray-400 text-center py-4">ยังไม่มีประวัติ</p>}
             </div>
           </div>
