@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { notifyCaseEvent } from '@/lib/notifications';
+import { notifyCaseEvent, notifyBulkCaseCreated } from '@/lib/notifications';
 import { LineNotifyEvent } from '@/types';
 
 const VALID_EVENTS: LineNotifyEvent[] = [
@@ -12,7 +12,13 @@ const VALID_EVENTS: LineNotifyEvent[] = [
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { caseId, event } = body;
+    const { caseId, caseIds, event } = body;
+
+    // Bulk case creation
+    if (caseIds && Array.isArray(caseIds) && event === 'case_created_bulk') {
+      const result = await notifyBulkCaseCreated(caseIds);
+      return NextResponse.json({ ok: true, sent: result.sent, reason: result.reason });
+    }
 
     if (!caseId || !VALID_EVENTS.includes(event)) {
       return NextResponse.json(

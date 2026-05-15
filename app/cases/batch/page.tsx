@@ -227,17 +227,19 @@ export default function BatchCasePage() {
 
         // Update asset status
         await supabase.from('assets').update({ status: 'under_repair' }).eq('id', item.asset.id)
-
-        // Notify LINE group (fire-and-forget)
-        fetch('/api/notify', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ caseId, event: 'case_created' }),
-        }).catch(() => {})
       } catch (err: any) {
         failCount++
         errors.push(`${item.asset.asset_code}: ${err.message || 'ไม่สามารถสร้างเคสได้'}`)
       }
+    }
+
+    // Send combined LINE notification for all created cases
+    if (createdIds.length > 0) {
+      fetch('/api/notify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ caseIds: createdIds, event: 'case_created_bulk' }),
+      }).catch(() => {})
     }
 
     setSubmitResults({ success: successCount, failed: failCount, errors, createdIds })

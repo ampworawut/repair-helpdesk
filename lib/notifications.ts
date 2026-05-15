@@ -111,3 +111,77 @@ export async function notifyCaseEvent(
     return { sent: false, reason: err?.message };
   }
 }
+
+/**
+ * Send a combined notification for bulk case creation.
+ * All cases from the same vendor group are grouped into one message.
+ */
+export async function notifyBulkCaseCreated(
+  caseIds: string[]
+): Promise<{ sent: boolean; reason?: string }> {
+  try {
+    if (!caseIds.length) return { sent: false, reason: 'No case IDs' };
+
+    const supabase = createClient(true);
+
+    const { data: cases } = await supabase
+      .from('repair_cases')
+      .select(`
+        id, case_no, title, priority,
+        asset:asset_id (
+          asset_code,
+          vendor:vendor_id ( group_id )
+        )
+      `)
+      .in('id', caseIds);
+
+    if (!cases?.length) return { sent: false, reason: 'No cases found' };
+
+    // Group by vendor group
+    const groupMap = new Map<string, { lineGroupId: string; cases: typeof cases }>();
+    for (const c of cases) {
+      const vendor = (c.asset as any)?.vendor;
+      const groupId = vendor?.group_id;
+      if (!groupId) continue;
+
+      const enabled = await isEventEnabled(groupId, 'case_created');
+      if (!enabled) continue;
+
+      const lineGroupId = await getLineGroupId(groupId);
+      if (!lineGroupId) continue;
+
+      if (!groupMap.has(groupId)) {
+        groupMap.set(groupId, { lineGroupId, cases: [] });
+      }
+      groupMap.get(groupId)!.cases.push(c);
+    }
+
+    if (groupMap.size === 0) return { sent: false, reason: 'No LINE groups to notify' };
+
+    const appUrl = process.env.NEXT_APP_URL || 'https://repair-helpdesk.vercel.app';
+    let allSent = true;
+
+    for (const [, group] of groupMap) {
+      const count = group.cases.length;
+      let msg = `🆕 แจ้งซ่อมใหม่ ${count} รายการ\n\n`;
+
+      for (const c of group.cases) {
+        const priorityEmoji: Record<string, string> = {
+          low: '🟢', medium: '🟡', high: '🟠', critical: '🔴'
+        };
+        msg += `📋 ${c.case_no} — ${c.title}\n`;
+        msg += `   ${priorityEmoji[c.priority] || ''} ${c.priority}`;
+        if ((c.asset as any)?.asset_code) msg += ` | 💻 ${(c.asset as any).asset_code}`;
+        msg += `\n   🔗 ${appUrl}/cases/${c.id}\n\n`;
+      }
+
+      const sent = await pushToGroup(group.lineGroupId, msg.trim());
+      if (!sent) allSent = false;
+    }
+
+    return { sent: allSent };
+  } catch (err: any) {
+    console.error('[NOTIFY BULK] Error:', err?.message || err);
+    return { sent: false, reason: err?.message };
+  }
+}
