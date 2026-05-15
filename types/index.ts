@@ -245,7 +245,7 @@ export interface TicketComment {
 export const STATUS_LABELS: Record<CaseStatus, string> = {
   pending: 'รอตอบรับ',
   responded: 'รับเรื่องแล้ว',
-  in_progress: 'กำลังดำเนินการ',
+  in_progress: 'ช่างเข้าดำเนินการ',
   on_hold: 'พักการดำเนินการ',
   resolved: 'ดำเนินการเสร็จสิ้น',
   closed: 'ปิดรายการ',

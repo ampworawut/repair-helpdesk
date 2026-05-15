@@ -46,7 +46,7 @@ const STATUS_ACTION_LABELS: Record<CaseStatus, string> = {
 /* ── Target status labels for dropdown ── */
 const TARGET_STATUS_LABELS: Record<string, string> = {
   responded:   '📌 ตอบรับเรื่อง',
-  in_progress: '🔧 กำลังดำเนินการ',
+  in_progress: '🔧 ช่างเข้าดำเนินการ',
   on_hold:     '⏸️ พักการดำเนินการ',
   resolved:    '✅ ดำเนินการเสร็จสิ้น',
   closed:      '🔒 ปิดรายการ',
@@ -324,7 +324,7 @@ export default function CaseDetailPage() {
     // Add status change comment
     const statusMessage: Record<string, string> = {
       responded: '📌 ตอบรับเรื่องแล้ว',
-      in_progress: '🔧 กำลังดำเนินการ',
+      in_progress: '🔧 ช่างเข้าดำเนินการ',
       on_hold: '⏸️ พักการดำเนินการ',
       resolved: '✅ ดำเนินการเสร็จสิ้น',
       closed: '🔒 ปิดรายการ',
@@ -825,6 +825,7 @@ export default function CaseDetailPage() {
                         .filter(s => {
                           if (s === 'cancelled') return role === 'admin' || role === 'supervisor'
                           if (s === 'responded') return role === 'admin' || role === 'vendor_staff'
+                          if (role === 'vendor_staff') return false // vendor can only respond
                           return true
                         })
                         .map(s => (
