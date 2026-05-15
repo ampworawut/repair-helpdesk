@@ -523,7 +523,7 @@ export default function CaseDetailPage() {
               <span className={cn('px-2.5 py-1 rounded-full text-xs font-semibold', PRIORITY_COLORS[c.priority])}>{PRIORITY_LABELS[c.priority]}</span>
               <span className={cn('px-2.5 py-1 rounded-full text-xs font-semibold', STATUS_COLORS[c.status])}>{STATUS_LABELS[c.status]}</span>
               {/* Category badge */}
-              {(profile?.role === 'admin' || profile?.role === 'supervisor') ? (
+              {(profile?.role === 'admin' || profile?.role === 'supervisor' || profile?.role === 'vendor_staff') ? (
                 <div className="relative">
                   <button
                     onClick={() => {
