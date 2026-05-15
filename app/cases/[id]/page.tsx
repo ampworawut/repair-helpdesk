@@ -262,7 +262,7 @@ export default function CaseDetailPage() {
   const vendorMatch = !!(vendor?.id && (profile?.vendor_id === vendor.id || (vendorGroup != null && profile?.vendor_group_id === vendorGroup.id)))
 
   const canUpdate = role && userId ? canUpdateCase(role, c?.created_by || '', userId, vendorMatch) : false
-  const canClose = role && userId ? canCloseCase(role, c?.created_by || '', userId) : false
+  const canClose = role && userId ? canCloseCase(role, c?.created_by || '', userId, vendorMatch) : false
   const canAssign = canAssignTechnician(role)
   const canChangeOwner = canChangeCaseOwner(role)
   const canPause = canPauseResumeSLA(role)

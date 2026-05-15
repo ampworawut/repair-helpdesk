@@ -20,10 +20,11 @@ export function canUpdateCase(role: UserRole | null, caseCreatedBy: string, user
   return false
 }
 
-export function canCloseCase(role: UserRole | null, caseCreatedBy: string, userId: string): boolean {
+export function canCloseCase(role: UserRole | null, caseCreatedBy: string, userId: string, vendorMatches: boolean): boolean {
   if (!role || !userId) return false
   if (role === 'admin' || role === 'supervisor') return true
   if (role === 'helpdesk' && caseCreatedBy === userId) return true
+  if (role === 'vendor_staff' && vendorMatches) return true
   return false
 }
 

@@ -128,11 +128,14 @@ export function validateSignature(
   secret: string,
   signature: string
 ): boolean {
-  if (!secret) return true;
+  if (!secret) {
+    console.error('[LINE] LINE_CHANNEL_SECRET is not set — cannot validate webhook signatures');
+    return false;
+  }
   try {
     const { validateSignature: vs } = require('@line/bot-sdk');
     return vs(body, secret, signature);
   } catch {
-    return true;
+    return false;
   }
 }

@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
 import { canBulkCreateTickets } from '@/lib/permissions'
+import { classifyCase } from '@/lib/categories'
 import {
   Asset, UserProfile, CasePriority, AssetStatus,
   PRIORITY_LABELS, PRIORITY_COLORS, ASSET_STATUS_LABELS,
@@ -210,6 +211,8 @@ export default function BatchCasePage() {
           continue
         }
 
+        const { main, sub } = classifyCase(item.title.trim(), item.description.trim())
+
         const { data: newCase, error: caseError } = await supabase
           .from('repair_cases')
           .insert({
@@ -217,6 +220,8 @@ export default function BatchCasePage() {
             title: item.title.trim(),
             description: item.description.trim() || null,
             priority: item.priority,
+            category: main,
+            sub_category: sub || null,
             service_location: item.asset.location || null,
             created_by: profile.id,
             batch_id: batchId,

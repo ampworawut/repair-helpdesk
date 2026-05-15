@@ -186,10 +186,10 @@ async function handleImageMessage(event: LineEvent, vendorGroupId: string) {
 
   const supabase = createClient(true);
 
-  // Find the most recent case that's not closed/cancelled for this vendor_group
+  // Find the most recent case that's not closed/cancelled for THIS vendor group
   const { data: recentCase } = await supabase
     .from('repair_cases')
-    .select('id, case_no')
+    .select('id, case_no, asset_id')
     .not('status', 'in', '(closed,cancelled)')
     .order('created_at', { ascending: false })
     .limit(1)
@@ -198,6 +198,28 @@ async function handleImageMessage(event: LineEvent, vendorGroupId: string) {
   if (!recentCase) {
     await pushToGroup(event.source.groupId, '❌ ไม่พบเคสที่เปิดอยู่เพื่อแนบรูป');
     return;
+  }
+
+  // Verify the case belongs to this vendor group
+  if (recentCase.asset_id) {
+    const { data: assetData } = await supabase
+      .from('assets')
+      .select('vendor_id')
+      .eq('id', recentCase.asset_id)
+      .single();
+
+    if (assetData) {
+      const { data: vendorData } = await supabase
+        .from('vendors')
+        .select('group_id')
+        .eq('id', (assetData as any).vendor_id)
+        .single();
+
+      if (!vendorData || (vendorData as any).group_id !== vendorGroupId) {
+        await pushToGroup(event.source.groupId, '❌ ไม่พบเคสที่เปิดอยู่ของกลุ่มนี้เพื่อแนบรูป');
+        return;
+      }
+    }
   }
 
   // Upload to Supabase Storage
@@ -218,12 +240,21 @@ async function handleImageMessage(event: LineEvent, vendorGroupId: string) {
     return;
   }
 
-  // Record in DB
+  // Log activity
+  const { data: act } = await supabase.from('case_activity_log').insert({
+    case_id: recentCase.id,
+    user_id: null, // system action from LINE
+    action: 'comment',
+    metadata: { content: 'แนบรูปภาพจาก LINE' },
+  }).select('id').single();
+
+  // Record attachment with activity_id
   await supabase.from('case_attachments').insert({
     case_id: recentCase.id,
     file_path: filePath,
     file_name: fileName,
     file_size: downloaded.buffer.length,
+    activity_id: act?.id || null,
   });
 
   await pushToGroup(
