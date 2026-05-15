@@ -100,12 +100,11 @@ interface KeywordRule {
 }
 
 const CATEGORY_RULES: KeywordRule[] = [
-  // ── Accident (highest priority) ──
+  // ── Accident: specific damage types (highest priority) ──
   { main: 'accident', sub: 'น้ำ/ของเหลวหก', keywords: ['น้ำหก', 'น้ำเข้า', 'ของเหลว', 'กาแฟหก', 'เปียก', 'น้ำรั่ว', 'โดนน้ำ', 'จมน้ำ', 'น้ำท่วม'] },
   { main: 'accident', sub: 'ตก/กระแทก', keywords: ['ตก', 'กระแทก', 'หล่น', 'ชน', 'ทับ', 'เหยียบ', 'กระชาก'] },
   { main: 'accident', sub: 'จอแตก', keywords: ['จอแตก', 'หน้าจอแตก', 'จอร้าว', 'หน้าจอร้าว', 'จอเสียหาย', 'led แตก', 'lcd แตก'] },
   { main: 'accident', sub: 'ฝา/บอดี้เสียหาย', keywords: ['ฝาแตก', 'ฝาร้าว', 'บอดี้แตก', 'body แตก', 'ฝาพัง', 'บานพับ', 'hinge', 'ฝาเครื่อง'] },
-  { main: 'accident', sub: 'หัก/แตก/หลุด', keywords: ['หัก', 'แตก', 'หลุด', 'หักงอ', 'งอ', 'บิ่น', 'ร้าว', 'บุบ', 'ยุบ', 'หหลุด', 'ปริ', 'แยก', 'กะเทาะ', 'บวม', 'หลวม'] },
 
   // ── Hardware ──
   { main: 'hardware', sub: 'เครื่องไม่เปิด/เปิดไม่ติด', keywords: ['เปิดไม่ติด', 'ไม่ติด', 'เปิดเครื่องไม่', 'ไม่ขึ้น', 'ไม่บูท', 'no power', 'ไฟไม่เข้า', 'เสียบแล้วไม่', 'บูทไม่', 'boot ไม่', 'เปิดไม่ได้', 'ไม่ยอมเปิด'] },
@@ -150,6 +149,9 @@ const CATEGORY_RULES: KeywordRule[] = [
   { main: 'account', sub: 'ล็อกอินไม่ได้', keywords: ['ล็อกอินไม่', 'login ไม่', 'เข้าไม่', 'sign in ไม่', 'เข้าระบบไม่', 'ล็อค', 'lock', 'locked', 'ถูก lock', 'ถูกระงับ', 'disabled'] },
   { main: 'account', sub: 'สิทธิ์การเข้าถึง', keywords: ['ไม่มีสิทธิ์', 'permission', 'access denied', 'สิทธิ์ไม่', 'ขอสิทธิ์', 'authorization', 'ไม่ได้รับอนุญาต'] },
   { main: 'account', sub: 'อีเมล', keywords: ['email', 'อีเมล', 'เมล', 'mail', 'outlook', 'gmail', 'ส่งเมลไม่', 'รับเมลไม่'] },
+
+  // ── Generic accident fallback (after all specific categories) ──
+  { main: 'accident', sub: 'หัก/แตก/หลุด', keywords: ['หัก', 'แตก', 'หลุด', 'หักงอ', 'งอ', 'บิ่น', 'ร้าว', 'บุบ', 'ยุบ', 'ปริ', 'แยก', 'กะเทาะ', 'บวม', 'หลวม'] },
 ]
 
 /* ── Classification function ── */
