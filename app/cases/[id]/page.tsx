@@ -821,7 +821,9 @@ export default function CaseDetailPage() {
                   </button>
                   {showStatusMenu && (
                     <div className="absolute top-full mt-1 left-0 right-0 bg-white border rounded-lg shadow-lg z-20 py-1">
-                      {STATUS_FLOW[c.status].map(s => (
+                      {STATUS_FLOW[c.status]
+                        .filter(s => s !== 'cancelled' || role === 'admin' || role === 'supervisor')
+                        .map(s => (
                         <button key={s} type="button" onClick={() => {
                           setShowStatusMenu(false)
                           const statusMessages: Record<string, string> = {
