@@ -196,6 +196,20 @@ export default function BatchCasePage() {
 
     for (const item of batchItems) {
       try {
+        // Check if asset already has an active case
+        const { data: existing } = await supabase
+          .from('repair_cases')
+          .select('id, case_no')
+          .eq('asset_id', item.asset.id)
+          .not('status', 'in', '(closed,cancelled)')
+          .limit(1)
+
+        if (existing && existing.length > 0) {
+          failCount++
+          errors.push(`${item.asset.asset_code}: มีเคสที่ยังไม่สิ้นสุด (${existing[0].case_no})`)
+          continue
+        }
+
         const { data: newCase, error: caseError } = await supabase
           .from('repair_cases')
           .insert({

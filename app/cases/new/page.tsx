@@ -86,6 +86,22 @@ export default function NewCasePage() {
 
     setSubmitting(true)
     try {
+      // 0. Check if asset already has an active case
+      if (selectedAsset?.id) {
+        const { data: existingCases } = await supabase
+          .from('repair_cases')
+          .select('id, case_no, status')
+          .eq('asset_id', selectedAsset.id)
+          .not('status', 'in', '(closed,cancelled)')
+          .limit(1)
+
+        if (existingCases && existingCases.length > 0) {
+          toast.error(`เครื่อง ${selectedAsset.asset_code} มีเคสที่ยังไม่สิ้นสุด (${existingCases[0].case_no})`)
+          setSubmitting(false)
+          return
+        }
+      }
+
       // 1. Classify
       const category = classifyCase(form.title, form.description)
 
