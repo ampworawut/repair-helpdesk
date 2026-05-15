@@ -68,8 +68,7 @@ export function canManageEscalation(role: UserRole | null): boolean {
 }
 
 export function canBulkCreateTickets(role: UserRole | null): boolean {
-  if (!role) return false
-  return ['admin', 'supervisor'].includes(role)
+  return role === 'admin'
 }
 
 export function canManageAssets(role: UserRole | null): boolean {
@@ -97,7 +96,7 @@ export const NAV_ITEMS: NavItem[] = [
   { href: '/', label: 'แดชบอร์ด', icon: 'LayoutDashboard', roles: ['admin', 'supervisor', 'helpdesk', 'vendor_staff'] },
   { href: '/cases', label: 'เคสซ่อมทั้งหมด', icon: 'ClipboardList', roles: ['admin', 'supervisor', 'helpdesk', 'vendor_staff'] },
   { href: '/cases/new', label: 'แจ้งซ่อมใหม่', icon: 'PlusCircle', roles: ['admin', 'supervisor', 'helpdesk'] },
-  { href: '/cases/batch', label: 'สร้างหลายเคส', icon: 'Layers', roles: ['admin', 'supervisor'] },
+  { href: '/cases/batch', label: 'สร้างหลายเคส', icon: 'Layers', roles: ['admin'] },
   {
     href: '#', label: 'จัดการระบบ', icon: 'Settings',
     roles: ['admin'],
