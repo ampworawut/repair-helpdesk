@@ -109,6 +109,7 @@ export const NAV_ITEMS: NavItem[] = [
       { href: '/admin/locations', label: 'สถานที่', icon: 'MapPin', roles: ['admin'] },
       { href: '/admin/templates', label: 'เทมเพลต', icon: 'FileText', roles: ['admin'] },
       { href: '/admin/sla', label: 'ตั้งค่า SLA', icon: 'Clock', roles: ['admin'] },
+      { href: '/admin/holidays', label: 'วันหยุด', icon: 'Calendar', roles: ['admin'] },
     ],
   },
   { href: '/reports', label: 'รายงาน', icon: 'BarChart3', roles: ['admin', 'supervisor'] },

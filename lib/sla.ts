@@ -13,6 +13,7 @@ let RESPONSE_HOURS = 4;
 let ONSITE_HOURS = 18;
 
 let configLoaded = false;
+let holidayDates: Set<string> = new Set();
 
 export interface SLAConfig {
   response_hours: number;
@@ -24,25 +25,30 @@ export interface SLAConfig {
 }
 
 /**
- * Load SLA config from database. Call once on app init.
+ * Load SLA config and holidays from database. Call once on app init.
  */
 export async function loadSLAConfig(): Promise<void> {
   try {
     const { createClient } = await import('@/lib/supabase-server');
     const supabase = createClient();
-    const { data } = await supabase.from('sla_config').select('*').single();
-    if (data) {
-      RESPONSE_HOURS = Number(data.response_hours) || 4;
-      ONSITE_HOURS = Number(data.onsite_hours) || 18;
-      WORK_START_HOUR = Number(data.work_start_hour) || 8;
-      WORK_START_MIN = Number(data.work_start_min) || 30;
-      WORK_END_HOUR = Number(data.work_end_hour) || 17;
-      WORK_END_MIN = Number(data.work_end_min) || 30;
+    const [configRes, holidaysRes] = await Promise.all([
+      supabase.from('sla_config').select('*').single(),
+      supabase.from('holidays').select('date'),
+    ]);
+    if (configRes.data) {
+      RESPONSE_HOURS = Number(configRes.data.response_hours) || 4;
+      ONSITE_HOURS = Number(configRes.data.onsite_hours) || 18;
+      WORK_START_HOUR = Number(configRes.data.work_start_hour) || 8;
+      WORK_START_MIN = Number(configRes.data.work_start_min) || 30;
+      WORK_END_HOUR = Number(configRes.data.work_end_hour) || 17;
+      WORK_END_MIN = Number(configRes.data.work_end_min) || 30;
       WORK_HOURS_PER_DAY = (WORK_END_HOUR * 60 + WORK_END_MIN - WORK_START_HOUR * 60 - WORK_START_MIN) / 60;
+    }
+    if (holidaysRes.data) {
+      holidayDates = new Set(holidaysRes.data.map((h: any) => h.date));
     }
     configLoaded = true;
   } catch {
-    // Use defaults
     configLoaded = true;
   }
 }
@@ -73,7 +79,11 @@ export interface SLAInfo {
 
 function isWorkday(date: Date): boolean {
   const day = date.getDay();
-  return day >= 1 && day <= 5; // Mon=1..Fri=5
+  if (day === 0 || day === 6) return false; // weekend
+  // Check holidays
+  const dateStr = date.toISOString().slice(0, 10);
+  if (holidayDates.has(dateStr)) return false;
+  return true;
 }
 
 function workStart(date: Date): Date {
