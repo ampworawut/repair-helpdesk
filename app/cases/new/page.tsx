@@ -54,8 +54,10 @@ export default function NewCasePage() {
       toast.warning('แนบรูปได้สูงสุด 10 รูป')
       return
     }
+    const valid = newFiles.filter(f => f.size <= 5 * 1024 * 1024)
+    if (valid.length !== newFiles.length) toast.warning('บางไฟล์เกิน 5MB ถูกข้าม')
     // Compress images before adding
-    const compressed = await compressImages(newFiles)
+    const compressed = await compressImages(valid)
     setFiles(prev => [...prev, ...compressed])
     compressed.forEach(f => {
       const url = URL.createObjectURL(f)

@@ -461,7 +461,8 @@ export default function CaseDetailPage() {
 
   async function handleUpdateFiles(e: React.ChangeEvent<HTMLInputElement>) {
     const files = Array.from(e.target.files || [])
-    const compressed = await compressImages(files)
+    const valid = files.filter(f => f.size <= 5 * 1024 * 1024)
+    const compressed = await compressImages(valid)
     setUpdateFiles(prev => [...prev, ...compressed])
     compressed.forEach(f => setUpdatePreviews(prev => [...prev, URL.createObjectURL(f)]))
   }
