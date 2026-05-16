@@ -108,6 +108,7 @@ export const NAV_ITEMS: NavItem[] = [
       { href: '/admin/assets', label: 'เครื่องคอมพิวเตอร์', icon: 'Monitor', roles: ['admin'] },
       { href: '/admin/locations', label: 'สถานที่', icon: 'MapPin', roles: ['admin'] },
       { href: '/admin/templates', label: 'เทมเพลต', icon: 'FileText', roles: ['admin'] },
+      { href: '/admin/sla', label: 'ตั้งค่า SLA', icon: 'Clock', roles: ['admin'] },
     ],
   },
   { href: '/reports', label: 'รายงาน', icon: 'BarChart3', roles: ['admin', 'supervisor'] },

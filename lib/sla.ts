@@ -1,12 +1,65 @@
 /**
- * SLA Calculation — ใช้เวลาทำการ จ-ศ 08:30-17:30 (GMT+7)
+ * SLA Calculation — ใช้เวลาทำการ จ-ศ (configurable via admin panel)
+ * Falls back to defaults if DB config not available.
  */
 
-const WORK_START_HOUR = 8;
-const WORK_START_MIN = 30;
-const WORK_END_HOUR = 17;
-const WORK_END_MIN = 30;
-const WORK_HOURS_PER_DAY = 9; // 8:30 → 17:30 = 9 hours
+// Default values (used when DB config is unavailable)
+let WORK_START_HOUR = 8;
+let WORK_START_MIN = 30;
+let WORK_END_HOUR = 17;
+let WORK_END_MIN = 30;
+let WORK_HOURS_PER_DAY = 9; // 8:30 → 17:30 = 9 hours
+let RESPONSE_HOURS = 4;
+let ONSITE_HOURS = 18;
+
+let configLoaded = false;
+
+export interface SLAConfig {
+  response_hours: number;
+  onsite_hours: number;
+  work_start_hour: number;
+  work_start_min: number;
+  work_end_hour: number;
+  work_end_min: number;
+}
+
+/**
+ * Load SLA config from database. Call once on app init.
+ */
+export async function loadSLAConfig(): Promise<void> {
+  try {
+    const { createClient } = await import('@/lib/supabase-server');
+    const supabase = createClient();
+    const { data } = await supabase.from('sla_config').select('*').single();
+    if (data) {
+      RESPONSE_HOURS = Number(data.response_hours) || 4;
+      ONSITE_HOURS = Number(data.onsite_hours) || 18;
+      WORK_START_HOUR = Number(data.work_start_hour) || 8;
+      WORK_START_MIN = Number(data.work_start_min) || 30;
+      WORK_END_HOUR = Number(data.work_end_hour) || 17;
+      WORK_END_MIN = Number(data.work_end_min) || 30;
+      WORK_HOURS_PER_DAY = (WORK_END_HOUR * 60 + WORK_END_MIN - WORK_START_HOUR * 60 - WORK_START_MIN) / 60;
+    }
+    configLoaded = true;
+  } catch {
+    // Use defaults
+    configLoaded = true;
+  }
+}
+
+/**
+ * Get current SLA config (for display in admin)
+ */
+export function getSLAConfig(): SLAConfig {
+  return {
+    response_hours: RESPONSE_HOURS,
+    onsite_hours: ONSITE_HOURS,
+    work_start_hour: WORK_START_HOUR,
+    work_start_min: WORK_START_MIN,
+    work_end_hour: WORK_END_HOUR,
+    work_end_min: WORK_END_MIN,
+  };
+}
 
 export type SLAStatus = 'ok' | 'warning' | 'breached';
 
@@ -87,16 +140,15 @@ function addBusinessHours(start: Date, hours: number): Date {
  * Calculate response SLA deadline: 4 business hours from case creation
  */
 export function calcResponseDeadline(createdAt: string | Date): Date {
-  return addBusinessHours(new Date(createdAt), 4);
+  return addBusinessHours(new Date(createdAt), RESPONSE_HOURS);
 }
 
 /**
- * Calculate onsite SLA deadline: 2 business days from response time
- * (2 business days = 18 business hours, but requirement is 2 working days)
- * We interpret "2 วันทำการ" as 2 calendar workdays, so = 2 * 9 = 18 business hours
+ * Calculate onsite SLA deadline from response time.
+ * Uses configurable onsite_hours from sla_config table.
  */
 export function calcOnsiteDeadline(respondedAt: string | Date): Date {
-  return addBusinessHours(new Date(respondedAt), 18); // 2 days * 9 hours
+  return addBusinessHours(new Date(respondedAt), ONSITE_HOURS);
 }
 
 /**
@@ -162,15 +214,17 @@ export function formatMet(createdAt: string | Date, respondedAt: string | Date):
   return `✅ ตอบรับภายใน ${formatDuration(diff)}`;
 }
 
-// ─── v2.2: BUSINESS_HOURS constant ──────────────────
+// ─── v2.2: BUSINESS_HOURS getter ──────────────────
 
-export const BUSINESS_HOURS = {
-  startHour: WORK_START_HOUR,
-  startMin: WORK_START_MIN,
-  endHour: WORK_END_HOUR,
-  endMin: WORK_END_MIN,
-  hoursPerDay: WORK_HOURS_PER_DAY,
-} as const;
+export function getBusinessHours() {
+  return {
+    startHour: WORK_START_HOUR,
+    startMin: WORK_START_MIN,
+    endHour: WORK_END_HOUR,
+    endMin: WORK_END_MIN,
+    hoursPerDay: WORK_HOURS_PER_DAY,
+  };
+}
 
 // ─── v2.2: SLA pause/resume ──────────────────────────
 
