@@ -21,6 +21,7 @@ import {
   PauseCircle, PlayCircle, ShieldAlert, MessageSquare, Pencil,
 } from 'lucide-react'
 import ConfirmModal from '@/components/ui/confirm-modal'
+import { compressImages } from '@/lib/compress'
 
 /* ── Status Flow (valid transitions) ── */
 const STATUS_FLOW: Record<CaseStatus, CaseStatus[]> = {
@@ -458,11 +459,11 @@ export default function CaseDetailPage() {
     loadData()
   }
 
-  function handleUpdateFiles(e: React.ChangeEvent<HTMLInputElement>) {
+  async function handleUpdateFiles(e: React.ChangeEvent<HTMLInputElement>) {
     const files = Array.from(e.target.files || [])
-    const valid = files.filter(f => f.size <= 5 * 1024 * 1024)
-    setUpdateFiles(prev => [...prev, ...valid])
-    valid.forEach(f => setUpdatePreviews(prev => [...prev, URL.createObjectURL(f)]))
+    const compressed = await compressImages(files)
+    setUpdateFiles(prev => [...prev, ...compressed])
+    compressed.forEach(f => setUpdatePreviews(prev => [...prev, URL.createObjectURL(f)]))
   }
 
   function removeUpdateFile(i: number) {

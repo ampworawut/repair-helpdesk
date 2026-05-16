@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { validateSignature, downloadLineImage, getVendorGroupByLineId, pushToGroup } from '@/lib/line';
 import { createClient } from '@/lib/supabase-server';
+import { compressImageServer } from '@/lib/compress-server';
 
 // Types for webhook event (matching LINE API shape)
 interface LineEvent {
@@ -222,15 +223,16 @@ async function handleImageMessage(event: LineEvent, vendorGroupId: string) {
     }
   }
 
-  // Upload to Supabase Storage
-  const ext = downloaded.contentType === 'image/png' ? 'png' : 'jpg';
+  // Compress image before upload
+  const compressed = await compressImageServer(downloaded.buffer, downloaded.contentType);
+  const ext = 'jpg';
   const fileName = `line-${msgId}.${ext}`;
   const filePath = `${recentCase.id}/${fileName}`;
 
   const { error: uploadError } = await supabase.storage
     .from('repair-attachments')
-    .upload(filePath, downloaded.buffer, {
-      contentType: downloaded.contentType,
+    .upload(filePath, compressed, {
+      contentType: 'image/jpeg',
       upsert: true,
     });
 
@@ -253,7 +255,7 @@ async function handleImageMessage(event: LineEvent, vendorGroupId: string) {
     case_id: recentCase.id,
     file_path: filePath,
     file_name: fileName,
-    file_size: downloaded.buffer.length,
+    file_size: compressed.length,
     activity_id: act?.id || null,
   });
 

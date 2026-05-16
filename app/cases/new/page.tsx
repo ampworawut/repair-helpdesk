@@ -8,6 +8,7 @@ import { cn } from '@/lib/utils'
 import LocationPicker from '@/components/cases/location-picker'
 import AssetAutocomplete from '@/components/cases/asset-autocomplete'
 import { classifyCase } from '@/lib/categories'
+import { compressImages } from '@/lib/compress'
 import { ArrowLeft, Upload, X, Image as ImageIcon } from 'lucide-react'
 import Link from 'next/link'
 import { toast } from 'sonner'
@@ -47,17 +48,16 @@ export default function NewCasePage() {
     setSelectedAsset(null)
   }
 
-  function handleFileAdd(e: React.ChangeEvent<HTMLInputElement>) {
+  async function handleFileAdd(e: React.ChangeEvent<HTMLInputElement>) {
     const newFiles = Array.from(e.target.files || [])
     if (files.length + newFiles.length > 10) {
       toast.warning('แนบรูปได้สูงสุด 10 รูป')
       return
     }
-    const valid = newFiles.filter(f => f.size <= 5 * 1024 * 1024)
-    if (valid.length !== newFiles.length) toast.warning('บางไฟล์เกิน 5MB ถูกข้าม')
-
-    setFiles(prev => [...prev, ...valid])
-    valid.forEach(f => {
+    // Compress images before adding
+    const compressed = await compressImages(newFiles)
+    setFiles(prev => [...prev, ...compressed])
+    compressed.forEach(f => {
       const url = URL.createObjectURL(f)
       setPreviews(prev => [...prev, url])
     })
