@@ -30,6 +30,58 @@ async function getLineGroupId(vendorGroupId: string): Promise<string | null> {
   return data?.line_group_id || null;
 }
 
+function buildFlexMessage(
+  event: LineNotifyEvent,
+  caseNo: string,
+  title: string,
+  priority: string,
+  assetCode?: string,
+  detailUrl?: string
+): any {
+  const label: Record<string, string> = {
+    case_created: '🆕 แจ้งซ่อมใหม่', case_assigned: '👤 ได้รับมอบหมาย',
+    case_in_progress: '🔧 เริ่มดำเนินการ', case_on_hold: '⏸️ พักเคส',
+    case_resolved: '✅ ดำเนินการเสร็จสิ้น', case_closed: '🔒 ปิดเคส',
+    case_cancelled: '❌ ยกเลิกเคส', new_comment: '💬 ความคิดเห็นใหม่',
+    sla_warning: '⚠️ SLA ใกล้ถึงกำหนด', sla_breached: '🚨 เกิน SLA แล้ว',
+    confirmation_requested: '✋ รอยืนยันการแก้ไข',
+  };
+
+  const priorityColor = priority === 'critical' ? '#EF4444' : '#6B7280';
+
+  return {
+    type: 'flex',
+    altText: `${label[event] || event}: ${caseNo} - ${title}`,
+    contents: {
+      type: 'bubble',
+      header: {
+        type: 'box', layout: 'vertical',
+        contents: [
+          { type: 'text', text: label[event] || event, weight: 'bold', size: 'md', color: '#1F2937' },
+        ],
+      },
+      body: {
+        type: 'box', layout: 'vertical', spacing: 'sm',
+        contents: [
+          { type: 'text', text: `📋 ${caseNo}`, weight: 'bold', size: 'sm', color: '#2563EB' },
+          { type: 'text', text: title, wrap: true, size: 'sm', color: '#374151' },
+          { type: 'text', text: `${priority === 'critical' ? '🔴' : '🟢'} ${priority}`, size: 'xs', color: priorityColor },
+          ...(assetCode ? [{ type: 'text', text: `💻 ${assetCode}`, size: 'xs', color: '#6B7280' } as any] : []),
+        ],
+      },
+      ...(detailUrl ? {
+        footer: {
+          type: 'box', layout: 'vertical',
+          contents: [
+            { type: 'button', style: 'primary', color: '#2563EB', height: 'sm',
+              action: { type: 'uri', label: '🔗 ดูรายละเอียด', uri: detailUrl } },
+          ],
+        },
+      } : {}),
+    },
+  };
+}
+
 function buildMessage(
   event: LineNotifyEvent,
   caseNo: string,
@@ -54,17 +106,13 @@ function buildMessage(
     sla_breached: '🚨 เกิน SLA แล้ว', confirmation_requested: 'รอยืนยันการแก้ไข',
   };
 
-  const priorityEmoji: Record<string, string> = {
-    low: '🟢', critical: '🔴'
-  };
+  const priorityEmoji: Record<string, string> = { low: '🟢', critical: '🔴' };
 
   let msg = `${emoji[event] || ''} ${label[event] || event}\n\n`;
-  msg += `📋 เคส: ${caseNo}\n`;
-  msg += `📝 ${title}\n`;
+  msg += `📋 เคส: ${caseNo}\n📝 ${title}\n`;
   msg += `${priorityEmoji[priority] || ''} ความเร่งด่วน: ${priority}\n`;
   if (assetCode) msg += `💻 อุปกรณ์: ${assetCode}\n`;
   if (detailUrl) msg += `\n🔗 ดูรายละเอียด: ${detailUrl}\n`;
-
   return msg;
 }
 

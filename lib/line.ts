@@ -15,7 +15,7 @@ function getLineClient(): messagingApi.MessagingApiClient | null {
  */
 export async function pushToGroup(
   lineGroupId: string,
-  text: string
+  textOrMessages: string | any[]
 ): Promise<boolean> {
   const client = getLineClient();
   if (!client) {
@@ -23,12 +23,14 @@ export async function pushToGroup(
     return false;
   }
 
+  const messages = typeof textOrMessages === 'string'
+    ? [{ type: 'text' as const, text: textOrMessages }]
+    : textOrMessages;
+
   try {
-    await client.pushMessage({
-      to: lineGroupId,
-      messages: [{ type: 'text', text }],
-    });
-    console.log(`[LINE] Push OK → ${lineGroupId} (${text.slice(0, 60)}...)`);
+    await client.pushMessage({ to: lineGroupId, messages });
+    const preview = typeof textOrMessages === 'string' ? textOrMessages.slice(0, 60) : JSON.stringify(textOrMessages).slice(0, 60);
+    console.log(`[LINE] Push OK → ${lineGroupId} (${preview}...)`);
 
     // Log outgoing message for statistics
     try {
@@ -37,8 +39,8 @@ export async function pushToGroup(
       await supabase.from('line_webhook_logs').insert({
         event_type: 'outgoing_message',
         group_id: lineGroupId,
-        message_type: 'text',
-        message_text: text.slice(0, 500),
+        message_type: typeof textOrMessages === 'string' ? 'text' : 'flex',
+        message_text: typeof textOrMessages === 'string' ? textOrMessages.slice(0, 500) : 'Flex Message',
         processed: true,
       });
     } catch (logErr) {
@@ -53,6 +55,30 @@ export async function pushToGroup(
     console.error(`[LINE] Push FAILED → ${lineGroupId}: ${msg}`);
     return false;
   }
+}
+
+/**
+ * Quick reply templates for LINE groups
+ */
+export const QUICK_REPLY_TEMPLATES = [
+  { label: '🔧 กำลังดำเนินการ', text: '🔧 กำลังดำเนินการ' },
+  { label: '⏸️ พักการดำเนินการ', text: '⏸️ พักการดำเนินการ' },
+  { label: '✅ ดำเนินการเสร็จสิ้น', text: '✅ ดำเนินการเสร็จสิ้น' },
+  { label: '📸 แนบรูปภาพ', text: '📸 กรุณาส่งรูปภาพ' },
+  { label: '📋 ดูสถานะเคส', text: 'พิมพ์หมายเลขเคสเพื่อดูสถานะ' },
+];
+
+export function buildQuickReply(items: { label: string; text: string }[] = QUICK_REPLY_TEMPLATES) {
+  return {
+    type: 'text',
+    text: 'เลือกการดำเนินการ:',
+    quickReply: {
+      items: items.slice(0, 13).map(item => ({
+        type: 'action' as const,
+        action: { type: 'message' as const, label: item.label, text: item.text },
+      })),
+    },
+  };
 }
 
 /**
