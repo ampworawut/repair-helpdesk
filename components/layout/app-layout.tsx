@@ -32,6 +32,7 @@ import {
   Download,
   Sun,
   Moon,
+  Mail,
 } from 'lucide-react'
 import Link from 'next/link'
 import { useTheme } from '@/contexts/theme-context'
@@ -39,7 +40,7 @@ import { useTheme } from '@/contexts/theme-context'
 const ICON_MAP: Record<string, React.ElementType> = {
   LayoutDashboard, ClipboardList, PlusCircle, Settings,
   Users, Building2, Monitor, MapPin, BarChart3,
-  Layers, FileText, Network, Clock, Calendar, Download,
+  Layers, FileText, Network, Clock, Calendar, Download, Mail,
 }
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
