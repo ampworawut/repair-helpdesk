@@ -4,7 +4,7 @@ import { useState, useRef, useEffect, useCallback } from 'react'
 import { createClient } from '@/lib/supabase'
 import { Asset } from '@/types'
 import { cn } from '@/lib/utils'
-import { Search, Loader2 } from 'lucide-react'
+import { Search, Loader2, Filter } from 'lucide-react'
 
 interface Props {
   value: string
@@ -20,6 +20,7 @@ export default function AssetAutocomplete({ value, asset, onSelect, onClear, err
   const [loading, setLoading] = useState(false)
   const [open, setOpen] = useState(false)
   const [highlightIdx, setHighlightIdx] = useState(-1)
+  const [inUseOnly, setInUseOnly] = useState(true)
   const inputRef = useRef<HTMLInputElement>(null)
   const listRef = useRef<HTMLUListElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
@@ -42,7 +43,7 @@ export default function AssetAutocomplete({ value, asset, onSelect, onClear, err
     return () => document.removeEventListener('mousedown', handleClick)
   }, [])
 
-  const searchAssets = useCallback(async (q: string) => {
+  const searchAssets = useCallback(async (q: string, filterInUse: boolean) => {
     if (q.length < 1) {
       setResults([])
       setOpen(false)
@@ -50,13 +51,16 @@ export default function AssetAutocomplete({ value, asset, onSelect, onClear, err
     }
 
     setLoading(true)
-    const { data } = await supabaseRef.current
+    let query = supabaseRef.current
       .from('assets')
       .select('*, vendor:vendor_id(id, name)')
       .or(`asset_code.ilike.%${q}%,model.ilike.%${q}%,serial_number.ilike.%${q}%`)
-      .eq('status', 'in_use')
       .order('asset_code', { ascending: true })
       .limit(20)
+
+    if (filterInUse) query = query.eq('status', 'in_use')
+
+    const { data } = await query
 
     setResults((data as Asset[]) || [])
     setLoading(false)
@@ -68,7 +72,7 @@ export default function AssetAutocomplete({ value, asset, onSelect, onClear, err
     setQuery(val)
     onClear()
     clearTimeout(debounceRef.current)
-    debounceRef.current = setTimeout(() => searchAssets(val), 250)
+    debounceRef.current = setTimeout(() => searchAssets(val, inUseOnly), 250)
   }
 
   function handleSelect(a: Asset) {
@@ -125,7 +129,7 @@ export default function AssetAutocomplete({ value, asset, onSelect, onClear, err
 
   return (
     <div ref={containerRef} className="relative">
-      {/* Input with clear button */}
+      {/* Input with toggle */}
       <div className="relative">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
         <input
@@ -133,17 +137,33 @@ export default function AssetAutocomplete({ value, asset, onSelect, onClear, err
           type="text"
           value={query}
           onChange={e => handleInputChange(e.target.value)}
-          onFocus={() => { if (query.length >= 1) searchAssets(query) }}
+          onFocus={() => { if (query.length >= 1) searchAssets(query, inUseOnly) }}
           onKeyDown={handleKeyDown}
           placeholder="พิมพ์รหัสเครื่อง, รุ่น, หรือ serial number..."
           className={cn(
-            'w-full pl-10 pr-10 py-3 border rounded-lg outline-none transition text-sm',
+            'w-full pl-10 pr-24 py-3 border rounded-lg outline-none transition text-sm',
             error ? 'border-red-400' : 'border-gray-300 focus:ring-2 focus:ring-blue-500'
           )}
         />
-        {loading && (
-          <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 animate-spin" />
-        )}
+        <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
+          {loading && <Loader2 className="w-4 h-4 text-gray-400 animate-spin" />}
+          <button
+            type="button"
+            onClick={() => {
+              const next = !inUseOnly
+              setInUseOnly(next)
+              if (query.length >= 1) searchAssets(query, next)
+            }}
+            className={cn(
+              'px-2 py-1 rounded text-xs font-medium transition',
+              inUseOnly ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'
+            )}
+            title={inUseOnly ? 'แสดงเฉพาะเครื่องที่ใช้งาน' : 'แสดงทุกสถานะ'}
+          >
+            <Filter className="w-3 h-3 inline mr-1" />
+            {inUseOnly ? 'ใช้งาน' : 'ทั้งหมด'}
+          </button>
+        </div>
       </div>
 
       {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
