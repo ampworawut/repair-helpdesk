@@ -61,6 +61,7 @@ export default function DashboardPage() {
       map[key] = { created: 0, closed: 0 }
     }
     allCases.forEach(c => {
+      if (c.status === 'cancelled') return
       const createdKey = new Date(c.created_at).toLocaleDateString('th-TH', { weekday: 'short' })
       if (map[createdKey]) map[createdKey].created++
       if (c.closed_at) {
@@ -75,6 +76,7 @@ export default function DashboardPage() {
   function categoryDist() {
     const map: Record<string, number> = {}
     allCases.forEach(c => {
+      if (c.status === 'cancelled') return
       const label = getMainLabel((c as any).category as CaseMainCategory || 'other')
       map[label] = (map[label] || 0) + 1
     })
