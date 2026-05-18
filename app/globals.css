@@ -25,24 +25,32 @@
 
 @layer base {
   body {
-    @apply bg-gray-50 text-gray-900 dark:bg-gray-950 dark:text-gray-100;
+    @apply bg-gray-50 text-gray-900;
+  }
+  .dark body {
+    background-color: #030712;
+    color: #f3f4f6;
   }
 }
 
-/* Dark mode overrides for common patterns */
-.dark .bg-white { @apply bg-gray-900; }
-.dark .bg-gray-50 { @apply bg-gray-800; }
-.dark .border { @apply border-gray-700; }
-.dark .border-b { @apply border-gray-700; }
-.dark .border-t { @apply border-gray-700; }
-.dark .text-gray-900 { @apply text-gray-100; }
-.dark .text-gray-800 { @apply text-gray-200; }
-.dark .text-gray-700 { @apply text-gray-300; }
-.dark .text-gray-600 { @apply text-gray-400; }
-.dark .text-gray-500 { @apply text-gray-400; }
-.dark .text-gray-400 { @apply text-gray-500; }
-.dark .hover\:bg-gray-50:hover { @apply hover:bg-gray-800; }
-.dark .hover\:bg-gray-100:hover { @apply hover:bg-gray-800; }
-.dark .divide-y > :not([hidden]) ~ :not([hidden]) { @apply border-gray-700; }
-.dark input, .dark select, .dark textarea { @apply bg-gray-800 border-gray-600 text-gray-100; }
-.dark input::placeholder, .dark textarea::placeholder { @apply text-gray-500; }
+/* Dark mode overrides — use plain CSS to avoid circular @apply */
+.dark .bg-white { background-color: #111827; }
+.dark .bg-gray-50 { background-color: #1f2937; }
+.dark .border { border-color: #374151; }
+.dark .border-b { border-color: #374151; }
+.dark .border-t { border-color: #374151; }
+.dark .text-gray-900 { color: #f3f4f6; }
+.dark .text-gray-800 { color: #e5e7eb; }
+.dark .text-gray-700 { color: #d1d5db; }
+.dark .text-gray-600 { color: #9ca3af; }
+.dark .text-gray-500 { color: #9ca3af; }
+.dark .text-gray-400 { color: #6b7280; }
+.dark .hover\:bg-gray-50:hover { background-color: #1f2937; }
+.dark .hover\:bg-gray-100:hover { background-color: #1f2937; }
+.dark .divide-y > :not([hidden]) ~ :not([hidden]) { border-color: #374151; }
+.dark input, .dark select, .dark textarea {
+  background-color: #1f2937;
+  border-color: #4b5563;
+  color: #f3f4f6;
+}
+.dark input::placeholder, .dark textarea::placeholder { color: #6b7280; }
