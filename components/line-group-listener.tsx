@@ -195,7 +195,7 @@ export default function LineGroupListener() {
                   <p className="font-medium">หมายเหตุ:</p>
                   <ul className="list-disc list-inside space-y-1">
                     <li>ต้องเพิ่ม @repairdesk_bot เข้ากลุ่ม LINE ก่อน</li>
-                    <li>ส่งข้อความในกลุ่มเพื่อ激活การตรวจจับ</li>
+                    <li>ส่งข้อความในกลุ่มเพื่อเริ่มการตรวจจับ</li>
                     <li>ระบบจะบันทึก Group ID อัตโนมัติ</li>
                   </ul>
                 </div>
