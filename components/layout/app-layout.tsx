@@ -36,6 +36,7 @@ import {
 } from 'lucide-react'
 import Link from 'next/link'
 import { useTheme } from '@/contexts/theme-context'
+import Breadcrumbs from './breadcrumbs'
 
 const ICON_MAP: Record<string, React.ElementType> = {
   LayoutDashboard, ClipboardList, PlusCircle, Settings,
@@ -264,6 +265,7 @@ function AppShell({ children }: { children: React.ReactNode }) {
 
         {/* Page content */}
         <main className="flex-1 p-4 lg:p-6 overflow-auto">
+          <Breadcrumbs />
           {children}
         </main>
       </div>

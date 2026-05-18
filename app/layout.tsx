@@ -27,6 +27,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="th" className={notoSansThai.variable}>
+      <head>
+        <link rel="manifest" href="/manifest.json" />
+        <meta name="theme-color" content="#2563eb" />
+      </head>
       <body className={notoSansThai.className}>
         <ThemeProvider>
           <SLAInit />
@@ -34,6 +38,11 @@ export default function RootLayout({
           <AppLayout>{children}</AppLayout>
           <Toaster position="top-right" richColors />
         </ThemeProvider>
+        <script dangerouslySetInnerHTML={{ __html: `
+          if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/sw.js');
+          }
+        `}} />
       </body>
     </html>
   )

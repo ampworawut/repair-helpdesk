@@ -22,6 +22,8 @@ import {
 } from 'lucide-react'
 import ConfirmModal from '@/components/ui/confirm-modal'
 import { compressImages } from '@/lib/compress'
+import MergeCaseButton from '@/components/cases/merge-case-button'
+import { useRealtimeActivity } from '@/hooks/use-realtime-activity'
 
 /* ── Status Flow (valid transitions) ── */
 const STATUS_FLOW: Record<CaseStatus, CaseStatus[]> = {
@@ -181,7 +183,7 @@ export default function CaseDetailPage() {
     const { data: atts } = await supabase.from('case_attachments').select('*').eq('case_id', id).order('created_at', { ascending: true })
     setAttachments(atts as CaseAttachment[] || [])
 
-    // Activity log
+    // Activity log — use realtime hook for live updates
     const { data: acts } = await supabase
       .from('case_activity_log')
       .select('*')
@@ -208,6 +210,27 @@ export default function CaseDetailPage() {
     }
 
     setActivities(actsData)
+
+    // Subscribe to realtime updates
+    const channel = supabase
+      .channel(`case-${id}`)
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'case_activity_log',
+        filter: `case_id=eq.${id}`,
+      }, async (payload: any) => {
+        const newAct = payload.new as CaseActivity
+        if (newAct.user_id) {
+          const { data: user } = await supabase.from('user_profiles').select('id, display_name').eq('id', newAct.user_id).single()
+          ;(newAct as any).user_profile = user
+        }
+        setActivities(prev => [...prev, newAct])
+      })
+      .subscribe()
+
+    // Store channel for cleanup
+    ;(window as any).__realtimeChannel = channel
 
     // Ticket comments
     const { data: cmts } = await supabase
@@ -356,6 +379,26 @@ export default function CaseDetailPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ caseId: c.id, event }),
+      }).catch(() => {})
+    }
+
+    // Email notification
+    const emailEvents: Record<string, string> = {
+      responded: 'notify_on_assign',
+      in_progress: 'notify_on_assign',
+      resolved: 'notify_on_resolve',
+      closed: 'notify_on_close',
+    }
+    const emailEvent = emailEvents[newStatus]
+    if (emailEvent) {
+      fetch('/api/email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          to: (c.created_by_profile as any)?.email || '',
+          subject: `RepairDesk: ${STATUS_LABELS[newStatus]} — ${c.case_no}`,
+          text: `เคส ${c.case_no}: ${c.title}\nสถานะ: ${STATUS_LABELS[newStatus]}\n\nดูรายละเอียด: ${window.location.origin}/cases/${c.id}`,
+        }),
       }).catch(() => {})
     }
 
