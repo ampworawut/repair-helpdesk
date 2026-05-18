@@ -30,8 +30,11 @@ import {
   Clock,
   Calendar,
   Download,
+  Sun,
+  Moon,
 } from 'lucide-react'
 import Link from 'next/link'
+import { useTheme } from '@/contexts/theme-context'
 
 const ICON_MAP: Record<string, React.ElementType> = {
   LayoutDashboard, ClipboardList, PlusCircle, Settings,
@@ -79,6 +82,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 function AppShell({ children }: { children: React.ReactNode }) {
   const profile = useProfile().profile!
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const { theme, toggle: toggleTheme } = useTheme()
   const [expandedMenus, setExpandedMenus] = useState<Set<string>>(new Set())
   const [notifCount, setNotifCount] = useState(0)
   const pathname = usePathname()
@@ -243,10 +247,11 @@ function AppShell({ children }: { children: React.ReactNode }) {
 
           <div className="flex-1" />
 
-          <Link
-            href="/"
-            className="relative p-2 rounded-lg hover:bg-gray-100"
-          >
+          <button onClick={toggleTheme} className="p-2 rounded-lg hover:bg-gray-100" title={theme === 'dark' ? 'Switch to light' : 'Switch to dark'}>
+            {theme === 'dark' ? <Sun className="w-5 h-5 text-yellow-500" /> : <Moon className="w-5 h-5 text-gray-600" />}
+          </button>
+
+          <Link href="/" className="relative p-2 rounded-lg hover:bg-gray-100">
             <Bell className="w-5 h-5 text-gray-600" />
             {notifCount > 0 && (
               <span className="absolute -top-0.5 -right-0.5 bg-red-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center font-medium">

@@ -6,7 +6,7 @@ import { RepairCase, UserProfile, STATUS_LABELS, PRIORITY_LABELS, STATUS_COLORS,
 import { getMainLabel, getMainColor, type CaseMainCategory } from '@/lib/categories'
 import { cn, formatDateTime, timeAgo } from '@/lib/utils'
 import Link from 'next/link'
-import { Search, Calendar, CheckSquare, X } from 'lucide-react'
+import { Search, Calendar, CheckSquare, X, UserPlus } from 'lucide-react'
 import { toast } from 'sonner'
 
 export default function CasesListPage() {
@@ -21,13 +21,22 @@ export default function CasesListPage() {
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [bulkStatus, setBulkStatus] = useState('')
   const [bulking, setBulking] = useState(false)
+  const [bulkAssign, setBulkAssign] = useState('')
+  const [vendorStaff, setVendorStaff] = useState<any[]>([])
   const supabase = createClient()
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (!session) return
       supabase.from('user_profiles').select('*').eq('id', session.user.id).single()
-        .then(({ data }) => setProfile(data as UserProfile))
+        .then(({ data }) => {
+          setProfile(data as UserProfile)
+          // Load vendor staff for bulk assign
+          if (data?.role === 'admin' || data?.role === 'supervisor') {
+            supabase.from('user_profiles').select('id, display_name').eq('role', 'vendor_staff').eq('is_active', true)
+              .then(({ data: staff }) => setVendorStaff(staff || []))
+          }
+        })
     })
   }, [])
 
@@ -101,6 +110,18 @@ export default function CasesListPage() {
     loadCases()
   }
 
+  async function applyBulkAssign() {
+    if (!bulkAssign || selected.size === 0) return
+    setBulking(true)
+    const ids = [...selected]
+    const { error } = await supabase.from('repair_cases').update({ assigned_to: bulkAssign }).in('id', ids)
+    if (error) toast.error(error.message)
+    else toast.success(`มอบหมายช่าง ${ids.length} รายการ`)
+    setBulking(false)
+    setBulkAssign('')
+    loadCases()
+  }
+
   const isAdmin = profile?.role === 'admin' || profile?.role === 'supervisor'
 
   return (
@@ -119,6 +140,18 @@ export default function CasesListPage() {
               className="flex items-center gap-1.5 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition text-sm font-medium">
               <CheckSquare className="w-4 h-4" /> ใช้
             </button>
+            {vendorStaff.length > 0 && (
+              <>
+                <select value={bulkAssign} onChange={e => setBulkAssign(e.target.value)} className="px-3 py-2 border rounded-lg text-sm bg-white">
+                  <option value="">มอบหมายช่าง...</option>
+                  {vendorStaff.map(s => <option key={s.id} value={s.id}>{s.display_name}</option>)}
+                </select>
+                <button onClick={applyBulkAssign} disabled={!bulkAssign || bulking}
+                  className="flex items-center gap-1.5 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 transition text-sm font-medium">
+                  <UserPlus className="w-4 h-4" /> มอบหมาย
+                </button>
+              </>
+            )}
             <button onClick={() => setSelected(new Set())} className="p-2 text-gray-400 hover:text-gray-600"><X className="w-4 h-4" /></button>
           </div>
         )}
