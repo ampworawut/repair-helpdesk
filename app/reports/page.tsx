@@ -45,6 +45,7 @@ export default function ReportsPage() {
   function monthlySummary() {
     const map: Record<string, { opened: number; closed: number }> = {}
     cases.forEach(c => {
+      if (c.status === 'cancelled') return
       const m = new Date(c.created_at).toLocaleDateString('th-TH', { year: 'numeric', month: '2-digit' })
       if (!map[m]) map[m] = { opened: 0, closed: 0 }
       map[m].opened++
@@ -57,6 +58,7 @@ export default function ReportsPage() {
   function slaCompliance() {
     let met = 0, breached = 0, pending = 0
     cases.forEach(c => {
+      if (c.status === 'cancelled') return
       if (c.status === 'pending' && c.sla_response_dl) {
         if (new Date(c.sla_response_dl) < new Date()) breached++
         else pending++
@@ -74,7 +76,7 @@ export default function ReportsPage() {
   /* ─── Report 3: MTTR (Mean Time To Repair) ─── */
   function mttrTrend() {
     const resolved = cases
-      .filter(c => c.closed_at && c.created_at)
+      .filter(c => c.closed_at && c.created_at && c.status !== 'cancelled')
       .sort((a, b) => new Date(a.closed_at!).getTime() - new Date(b.closed_at!).getTime())
 
     const map: Record<string, { total: number; count: number }> = {}
@@ -96,6 +98,7 @@ export default function ReportsPage() {
   function vendorPerf() {
     const map: Record<string, { total: number; breached: number }> = {}
     cases.forEach(c => {
+      if (c.status === 'cancelled') return
       const vendorName = (c as any).asset?.vendor_id || 'ไม่ระบุ'
       if (!map[vendorName]) map[vendorName] = { total: 0, breached: 0 }
       map[vendorName].total++
@@ -111,7 +114,7 @@ export default function ReportsPage() {
   /* ─── Status Summary ─── */
   function statusSummary() {
     const map: Record<string, number> = {}
-    cases.forEach(c => { map[c.status] = (map[c.status] || 0) + 1 })
+    cases.forEach(c => { if (c.status === 'cancelled') return; map[c.status] = (map[c.status] || 0) + 1 })
     return Object.entries(map).map(([k, v]) => ({ name: STATUS_LABELS[k as keyof typeof STATUS_LABELS] || k, value: v }))
   }
 
@@ -119,6 +122,7 @@ export default function ReportsPage() {
   function categoryBreakdown() {
     const map: Record<string, number> = {}
     cases.forEach(c => {
+      if (c.status === 'cancelled') return
       const main = (c as any).category || 'other'
       const label = getMainLabel(main as CaseMainCategory)
       map[label] = (map[label] || 0) + 1
@@ -188,10 +192,11 @@ export default function ReportsPage() {
   }
 
   /* ─── Stat Cards ─── */
-  const totalCases = cases.length
-  const openCases = cases.filter(c => ['pending', 'responded', 'in_progress'].includes(c.status)).length
-  const closedCases = cases.filter(c => c.status === 'closed').length
-  const breachedCases = cases.filter(c => c.sla_response_dl && c.status === 'pending' && new Date(c.sla_response_dl) < new Date()).length
+  const activeCases = cases.filter(c => c.status !== 'cancelled')
+  const totalCases = activeCases.length
+  const openCases = activeCases.filter(c => ['pending', 'responded', 'in_progress'].includes(c.status)).length
+  const closedCases = activeCases.filter(c => c.status === 'closed').length
+  const breachedCases = activeCases.filter(c => c.sla_response_dl && c.status === 'pending' && new Date(c.sla_response_dl) < new Date()).length
   const lineStats = lineMessageStats()
 
   const statCards = [
