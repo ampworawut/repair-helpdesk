@@ -26,13 +26,14 @@ export default function DashboardPage() {
     ])
 
     const data = recentRes.data as unknown as RepairCase[] || []
+    const allData = allRes.data as unknown as RepairCase[] || []
     setCases(data)
-    setAllCases(allRes.data as unknown as RepairCase[] || [])
+    setAllCases(allData)
 
     const now = new Date()
     let pending = 0, slaWarn = 0, breached = 0, onHold = 0
-    data.forEach(c => {
-      if (c.status === 'cancelled') return // exclude cancelled
+    allData.forEach(c => {
+      if (c.status === 'cancelled') return
       if (['pending', 'responded', 'in_progress', 'on_hold'].includes(c.status)) pending++
       if (c.status === 'on_hold') onHold++
       if (c.sla_response_dl && c.status === 'pending') {
@@ -46,7 +47,7 @@ export default function DashboardPage() {
         if (dl.getTime() - now.getTime() <= 0) breached++
       }
     })
-    setCounts({ total: data.filter(c => c.status !== 'cancelled').length, pending, slaWarning: slaWarn, breached, onHold })
+    setCounts({ total: allData.filter(c => c.status !== 'cancelled').length, pending, slaWarning: slaWarn, breached, onHold })
   }
 
   // Weekly trend
