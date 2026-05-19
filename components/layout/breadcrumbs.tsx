@@ -21,6 +21,11 @@ const LABELS: Record<string, string> = {
   email: 'ตั้งค่าอีเมล',
   reports: 'รายงาน',
   profile: 'โปรไฟล์',
+  edit: 'แก้ไข',
+}
+
+function isUUID(seg: string): boolean {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(seg)
 }
 
 export default function Breadcrumbs() {
@@ -35,14 +40,16 @@ export default function Breadcrumbs() {
       {segments.map((seg, i) => {
         const href = '/' + segments.slice(0, i + 1).join('/')
         const isLast = i === segments.length - 1
+        // Skip UUID segments (case IDs, asset IDs, etc.)
+        if (isUUID(seg)) return null
         const label = LABELS[seg] || seg
         return (
           <span key={seg} className="flex items-center gap-1">
             <ChevronRight className="w-3 h-3" />
             {isLast ? (
-              <span className="text-gray-900 font-medium">{label}</span>
+              <span className="text-gray-900 dark:text-gray-100 font-medium">{label}</span>
             ) : (
-              <Link href={href} className="hover:text-blue-600">{label}</Link>
+              <Link href={href} className="hover:text-blue-600 dark:hover:text-blue-400">{label}</Link>
             )}
           </span>
         )
