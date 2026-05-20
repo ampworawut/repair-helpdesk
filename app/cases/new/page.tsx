@@ -105,7 +105,7 @@ export default function NewCasePage() {
       }
 
       // 1. Classify
-      const category = classifyCase(form.title, form.description)
+      const { main, sub } = classifyCase(form.title, form.description)
 
       // 2. Create case
       let caseData: any = {
@@ -113,7 +113,8 @@ export default function NewCasePage() {
         title: form.title,
         description: form.description || null,
         priority: form.priority,
-        category,
+        category: main,
+        sub_category: sub || null,
         service_location: form.serviceLocation,
         created_by: profile.id,
       };
