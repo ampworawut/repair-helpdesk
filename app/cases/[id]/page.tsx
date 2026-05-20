@@ -211,26 +211,28 @@ export default function CaseDetailPage() {
 
     setActivities(actsData)
 
-    // Subscribe to realtime updates
-    const channel = supabase
-      .channel(`case-${id}`)
-      .on('postgres_changes', {
-        event: 'INSERT',
-        schema: 'public',
-        table: 'case_activity_log',
-        filter: `case_id=eq.${id}`,
-      }, async (payload: any) => {
-        const newAct = payload.new as CaseActivity
-        if (newAct.user_id) {
-          const { data: user } = await supabase.from('user_profiles').select('id, display_name').eq('id', newAct.user_id).single()
-          ;(newAct as any).user_profile = user
-        }
-        setActivities(prev => [...prev, newAct])
-      })
-      .subscribe()
-
-    // Store channel for cleanup
-    ;(window as any).__realtimeChannel = channel
+    // Subscribe to realtime updates (fire-and-forget, don't block loading)
+    try {
+      const channel = supabase
+        .channel(`case-${id}`)
+        .on('postgres_changes', {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'case_activity_log',
+          filter: `case_id=eq.${id}`,
+        }, async (payload: any) => {
+          const newAct = payload.new as CaseActivity
+          if (newAct.user_id) {
+            const { data: user } = await supabase.from('user_profiles').select('id, display_name').eq('id', newAct.user_id).single()
+            ;(newAct as any).user_profile = user
+          }
+          setActivities(prev => [...prev, newAct])
+        })
+        .subscribe()
+      ;(window as any).__realtimeChannel = channel
+    } catch (e) {
+      console.error('Realtime subscription failed:', e)
+    }
 
     // Ticket comments
     const { data: cmts } = await supabase
