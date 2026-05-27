@@ -22,7 +22,7 @@ import {
 } from 'lucide-react'
 import ConfirmModal from '@/components/ui/confirm-modal'
 import { compressImages } from '@/lib/compress'
-import { uploadToS3, getS3PublicUrl } from '@/lib/s3'
+import { getS3PublicUrl } from '@/lib/s3'
 import MergeCaseButton from '@/components/cases/merge-case-button'
 import { useRealtimeActivity } from '@/hooks/use-realtime-activity'
 
@@ -437,13 +437,16 @@ export default function CaseDetailPage() {
 
       const activityId = act?.id
 
-      // Upload files to S3
+      // Upload files via server API (avoids CORS + credential exposure)
       for (const file of updateFiles) {
         const filePath = `${c.id}/${Date.now()}_${file.name}`
         try {
-          const buffer = await file.arrayBuffer()
-          await uploadToS3(filePath, new Uint8Array(buffer), file.type || 'application/octet-stream')
-        } catch (uploadError) { console.error('S3 upload error:', uploadError); continue }
+          const formData = new FormData()
+          formData.append('file', file)
+          formData.append('key', filePath)
+          const res = await fetch('/api/upload', { method: 'POST', body: formData })
+          if (!res.ok) throw new Error(await res.text())
+        } catch (uploadError) { console.error('Upload error:', uploadError); continue }
 
         await supabase.from('case_attachments').insert({
           case_id: c.id, file_path: filePath,

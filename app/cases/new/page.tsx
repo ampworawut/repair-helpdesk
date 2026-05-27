@@ -9,7 +9,6 @@ import LocationPicker from '@/components/cases/location-picker'
 import AssetAutocomplete from '@/components/cases/asset-autocomplete'
 import { classifyCase } from '@/lib/categories'
 import { compressImages } from '@/lib/compress'
-import { uploadToS3 } from '@/lib/s3'
 import { ArrowLeft, Upload, X, Image as ImageIcon } from 'lucide-react'
 import Link from 'next/link'
 import { toast } from 'sonner'
@@ -129,14 +128,17 @@ export default function NewCasePage() {
       if (caseError) throw caseError
       const caseId = newCase.id
 
-      // 2. Upload files to S3
+      // 2. Upload files via server API (avoids CORS + credential exposure)
       for (const file of files) {
         const filePath = `${caseId}/${Date.now()}_${file.name}`
         try {
-          const buffer = await file.arrayBuffer()
-          await uploadToS3(filePath, new Uint8Array(buffer), file.type || 'application/octet-stream')
+          const formData = new FormData()
+          formData.append('file', file)
+          formData.append('key', filePath)
+          const res = await fetch('/api/upload', { method: 'POST', body: formData })
+          if (!res.ok) throw new Error(await res.text())
         } catch (uploadError) {
-          console.error('S3 upload error:', uploadError)
+          console.error('Upload error:', uploadError)
           continue
         }
 
