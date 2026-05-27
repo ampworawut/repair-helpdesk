@@ -22,6 +22,7 @@ import {
 } from 'lucide-react'
 import ConfirmModal from '@/components/ui/confirm-modal'
 import { compressImages } from '@/lib/compress'
+import { uploadToS3, getS3PublicUrl } from '@/lib/s3'
 import MergeCaseButton from '@/components/cases/merge-case-button'
 import { useRealtimeActivity } from '@/hooks/use-realtime-activity'
 
@@ -436,11 +437,13 @@ export default function CaseDetailPage() {
 
       const activityId = act?.id
 
-      // Upload files
+      // Upload files to S3
       for (const file of updateFiles) {
         const filePath = `${c.id}/${Date.now()}_${file.name}`
-        const { error: uploadError } = await supabase.storage.from('repair-attachments').upload(filePath, file)
-        if (uploadError) { console.error(uploadError); continue }
+        try {
+          const buffer = await file.arrayBuffer()
+          await uploadToS3(filePath, new Uint8Array(buffer), file.type || 'application/octet-stream')
+        } catch (uploadError) { console.error('S3 upload error:', uploadError); continue }
 
         await supabase.from('case_attachments').insert({
           case_id: c.id, file_path: filePath,
@@ -772,7 +775,7 @@ export default function CaseDetailPage() {
                     {actAttachments.length > 0 && (
                       <div className="flex flex-wrap gap-2 mt-2">
                         {actAttachments.map((att, i) => {
-                          const url = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/repair-attachments/${att.file_path}`
+                          const url = getS3PublicUrl(att.file_path)
                           const globalIdx = attachments.findIndex(a => a.id === att.id)
                           return (
                             <button key={att.id} onClick={() => setLightboxIdx(globalIdx)} className="w-20 h-20 rounded-lg border overflow-hidden hover:ring-2 ring-blue-400 transition group relative">
@@ -979,7 +982,7 @@ export default function CaseDetailPage() {
             </button>
           )}
           <img
-            src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/repair-attachments/${attachments[lightboxIdx].file_path}`}
+            src={getS3PublicUrl(attachments[lightboxIdx].file_path)}
             alt={attachments[lightboxIdx].file_name}
             className="max-w-full max-h-[90vh] object-contain rounded-lg"
             onClick={e => e.stopPropagation()}
