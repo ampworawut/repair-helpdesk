@@ -212,8 +212,14 @@ export default function CaseDetailPage() {
 
     setActivities(actsData)
 
-    // Subscribe to realtime updates (fire-and-forget, don't block loading)
+    // Subscribe to realtime updates
     try {
+      // Remove previous channel if it exists (prevents duplicate subscription error)
+      const prevChannel = (window as any).__realtimeChannel
+      if (prevChannel) {
+        supabase.removeChannel(prevChannel)
+      }
+
       const channel = supabase
         .channel(`case-${id}`)
         .on('postgres_changes', {
