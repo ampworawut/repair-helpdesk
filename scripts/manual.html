@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<title>คู่มือการใช้งาน RepairDesk</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700&display=swap');
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Noto Sans Thai', sans-serif; font-size: 14px; color: #1f2937; line-height: 1.7; }
+  .page { page-break-after: always; padding: 40px 50px; max-width: 800px; margin: 0 auto; }
+  .page:last-child { page-break-after: auto; }
+  h1 { font-size: 28px; color: #2563eb; margin-bottom: 8px; }
+  h2 { font-size: 22px; color: #1e40af; margin: 24px 0 12px; border-bottom: 2px solid #dbeafe; padding-bottom: 6px; }
+  h3 { font-size: 17px; color: #374151; margin: 16px 0 8px; }
+  p { margin: 6px 0; }
+  ul, ol { margin: 8px 0 8px 24px; }
+  li { margin: 4px 0; }
+  .cover { text-align: center; padding-top: 180px; }
+  .cover h1 { font-size: 36px; margin-bottom: 16px; }
+  .cover .subtitle { font-size: 18px; color: #6b7280; margin-bottom: 40px; }
+  .cover .version { font-size: 14px; color: #9ca3af; margin-top: 60px; }
+  .toc { }
+  .toc a { color: #2563eb; text-decoration: none; }
+  .toc li { margin: 6px 0; }
+  .screenshot { border: 2px dashed #d1d5db; border-radius: 8px; padding: 40px 20px; text-align: center; color: #9ca3af; margin: 16px 0; background: #f9fafb; font-size: 13px; }
+  .tip { background: #eff6ff; border-left: 4px solid #2563eb; padding: 10px 14px; margin: 12px 0; border-radius: 0 6px 6px 0; font-size: 13px; }
+  .warning { background: #fef3c7; border-left: 4px solid #f59e0b; padding: 10px 14px; margin: 12px 0; border-radius: 0 6px 6px 0; font-size: 13px; }
+  table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 13px; }
+  th { background: #f3f4f6; padding: 8px 10px; text-align: left; font-weight: 600; border: 1px solid #e5e7eb; }
+  td { padding: 8px 10px; border: 1px solid #e5e7eb; }
+  .step { background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 12px 16px; margin: 10px 0; }
+  .step strong { color: #16a34a; }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 600; }
+  .badge-admin { background: #fce7f3; color: #be185d; }
+  .badge-all { background: #dbeafe; color: #1d4ed8; }
+</style>
+</head>
+<body>
+
+<!-- ====== COVER ====== -->
+<div class="page cover">
+  <h1>📋 คู่มือการใช้งาน</h1>
+  <h1>RepairDesk</h1>
+  <p class="subtitle">ระบบแจ้งซ่อมคอมพิวเตอร์</p>
+  <p style="color:#6b7280;">สำหรับผู้ดูแลระบบ (Admin) · หัวหน้างาน (Supervisor) · เจ้าหน้าที่ Helpdesk · ช่างผู้ให้เช่า (Vendor Staff)</p>
+  <p class="version">เวอร์ชัน 1.0 · พฤษภาคม 2569</p>
+</div>
+
+<!-- ====== TOC ====== -->
+<div class="page toc">
+  <h2>📑 สารบัญ</h2>
+  <ol>
+    <li><a href="#intro">แนะนำระบบ RepairDesk</a></li>
+    <li><a href="#login">การเข้าสู่ระบบ</a></li>
+    <li><a href="#dashboard">หน้าแดชบอร์ด</a></li>
+    <li><a href="#create-case">การแจ้งซ่อม (สร้างเคส)</a></li>
+    <li><a href="#batch-case">การสร้างเคสแบบกลุ่ม (Batch)</a></li>
+    <li><a href="#case-list">รายการเคสทั้งหมด</a></li>
+    <li><a href="#case-detail">หน้ารายละเอียดเคส</a>
+      <ol>
+        <li>ข้อมูลเคสและ SLA</li>
+        <li>การเปลี่ยนสถานะ</li>
+        <li>การมอบหมายช่าง</li>
+        <li>ประวัติการดำเนินการ (Activity Log)</li>
+        <li>ความคิดเห็น (Comments)</li>
+        <li>การแนบรูปภาพ</li>
+        <li>การยืนยันผลการแก้ไข</li>
+      </ol>
+    </li>
+    <li><a href="#reports">รายงาน (Reports)</a></li>
+    <li><a href="#admin">การจัดการระบบ (Admin)</a>
+      <ol>
+        <li>จัดการผู้ใช้</li>
+        <li>จัดการผู้ให้เช่า (Vendors)</li>
+        <li>จัดการกลุ่มผู้ให้เช่า (Vendor Groups)</li>
+        <li>จัดการเครื่องคอมพิวเตอร์ (Assets)</li>
+        <li>จัดการสถานที่ให้บริการ</li>
+        <li>จัดการเทมเพลต</li>
+        <li>ตั้งค่า SLA</li>
+        <li>จัดการวันหยุด</li>
+        <li>ส่งออกข้อมูล</li>
+        <li>ตั้งค่าอีเมล</li>
+      </ol>
+    </li>
+    <li><a href="#line">การใช้งานผ่าน LINE</a></li>
+    <li><a href="#profile">การจัดการโปรไฟล์</a></li>
+  </ol>
+</div>
+
+<!-- ====== 1. INTRO ====== -->
+<div class="page" id="intro">
+  <h2>1. แนะนำระบบ RepairDesk</h2>
+  <p>RepairDesk เป็นระบบแจ้งซ่อมคอมพิวเตอร์ที่ช่วยให้องค์กรสามารถจัดการงานซ่อมได้อย่างมีประสิทธิภาพ ตั้งแต่การแจ้งซ่อม ติดตามสถานะ ไปจนถึงการปิดงาน</p>
+
+  <h3>บทบาทผู้ใช้งาน</h3>
+  <table>
+    <tr><th>บทบาท</th><th>คำอธิบาย</th></tr>
+    <tr><td><strong>Admin</strong></td><td>ผู้ดูแลระบบ — จัดการทุกอย่างในระบบได้ทั้งหมด</td></tr>
+    <tr><td><strong>Supervisor</strong></td><td>หัวหน้างาน — ดูรายงาน ดูเคสทั้งหมด สร้างเคสได้</td></tr>
+    <tr><td><strong>Helpdesk</strong></td><td>เจ้าหน้าที่แจ้งซ่อม — สร้างเคส อัปเดตเคสของตัวเอง</td></tr>
+    <tr><td><strong>Vendor Staff</strong></td><td>ช่างผู้ให้เช่า — อัปเดตสถานะเคสที่ได้รับมอบหมาย</td></tr>
+  </table>
+
+  <h3>วงจรสถานะเคส</h3>
+  <p><code>รอดำเนินการ → ตอบรับเรื่อง → กำลังดำเนินการ → ดำเนินการเสร็จสิ้น → ปิดรายการ</code></p>
+  <p>สามารถ <strong>พักการดำเนินการ</strong> หรือ <strong>ยกเลิก</strong> ได้ระหว่างทาง</p>
+
+  <div class="screenshot">[ภาพ: ภาพรวมระบบ RepairDesk]</div>
+</div>
+
+<!-- ====== 2. LOGIN ====== -->
+<div class="page" id="login">
+  <h2>2. การเข้าสู่ระบบ</h2>
+
+  <div class="step"><strong>ขั้นตอน:</strong> เปิดเว็บเบราว์เซอร์ → ไปที่ URL ของระบบ → กรอกอีเมลและรหัสผ่าน → กดปุ่ม "เข้าสู่ระบบ"</div>
+
+  <div class="screenshot">[ภาพ: หน้าเข้าสู่ระบบ — แสดงฟอร์มกรอกอีเมลและรหัสผ่าน]</div>
+
+  <div class="tip">💡 <strong>เคล็ดลับ:</strong> หากลืมรหัสผ่าน ให้ติดต่อผู้ดูแลระบบ (Admin) เพื่อตั้งรหัสผ่านใหม่</div>
+</div>
+
+<!-- ====== 3. DASHBOARD ====== -->
+<div class="page" id="dashboard">
+  <h2>3. หน้าแดชบอร์ด</h2>
+  <p>เมื่อเข้าสู่ระบบสำเร็จ จะเห็นหน้าแดชบอร์ดที่แสดงภาพรวมของระบบ:</p>
+
+  <ul>
+    <li><strong>การ์ดสรุป:</strong> จำนวนเคสที่เปิดอยู่ · คำเตือน SLA · SLA ที่เกินกำหนด · เคสที่พักไว้</li>
+    <li><strong>กราฟแท่ง:</strong> แนวโน้มเคสรายสัปดาห์</li>
+    <li><strong>กราฟวงกลม:</strong> สัดส่วนเคสตามหมวดหมู่</li>
+    <li><strong>ตาราง:</strong> 10 เคสล่าสุด</li>
+  </ul>
+
+  <div class="screenshot">[ภาพ: หน้าแดชบอร์ด — แสดงการ์ดสรุป กราฟ และตารางเคสล่าสุด]</div>
+
+  <h3>เมนูด้านข้าง (Sidebar)</h3>
+  <table>
+    <tr><th>เมนู</th><th>ผู้ที่มองเห็น</th></tr>
+    <tr><td>🏠 แดชบอร์ด</td><td>ทุกคน</td></tr>
+    <tr><td>📋 เคสทั้งหมด</td><td>ทุกคน</td></tr>
+    <tr><td>➕ แจ้งซ่อมใหม่</td><td>Admin, Supervisor, Helpdesk</td></tr>
+    <tr><td>📦 สร้างเคสแบบกลุ่ม</td><td>Admin เท่านั้น</td></tr>
+    <tr><td>⚙️ จัดการระบบ</td><td>Admin เท่านั้น</td></tr>
+    <tr><td>📊 รายงาน</td><td>Admin, Supervisor</td></tr>
+  </table>
+</div>
+
+<!-- ====== 4. CREATE CASE ====== -->
+<div class="page" id="create-case">
+  <h2>4. การแจ้งซ่อม (สร้างเคส)</h2>
+
+  <div class="step">
+    <strong>ขั้นตอนที่ 1:</strong> คลิกเมนู "➕ แจ้งซ่อมใหม่" ในแถบด้านข้าง
+  </div>
+  <div class="step">
+    <strong>ขั้นตอนที่ 2:</strong> ค้นหาและเลือกเครื่อง — พิมพ์รหัสเครื่องหรือชื่อเครื่องในช่องค้นหา ระบบจะแสดงรายการที่ตรงกัน
+  </div>
+  <div class="step">
+    <strong>ขั้นตอนที่ 3:</strong> กรอกข้อมูลเคส:
+    <ul>
+      <li><strong>หัวข้อ:</strong> อธิบายปัญหาสั้นๆ (เช่น "จอฟ้า", "เปิดไม่ติด")</li>
+      <li><strong>สถานที่รับบริการ:</strong> เลือกจากรายการสถานที่</li>
+      <li><strong>ความสำคัญ:</strong> ปกติ หรือ ด่วน</li>
+      <li><strong>รายละเอียด:</strong> อธิบายปัญหาเพิ่มเติม (ไม่บังคับ)</li>
+    </ul>
+  </div>
+  <div class="step">
+    <strong>ขั้นตอนที่ 4:</strong> แนบรูปภาพ (ถ้ามี) — ลากวางหรือคลิกเพื่อเลือกไฟล์ สูงสุด 10 รูป ขนาดไม่เกิน 5MB ต่อรูป
+  </div>
+  <div class="step">
+    <strong>ขั้นตอนที่ 5:</strong> กดปุ่ม "สร้างเคส"
+  </div>
+
+  <div class="screenshot">[ภาพ: หน้าแจ้งซ่อมใหม่ — แสดงฟอร์มกรอกข้อมูล พร้อมช่องค้นหาเครื่องและอัปโหลดรูป]</div>
+
+  <div class="tip">💡 ระบบจะจัดหมวดหมู่ให้อัตโนมัติจากหัวข้อและรายละเอียดที่กรอก (เช่น ฮาร์ดแวร์, ซอฟต์แวร์, เน็ตเวิร์ค, ปริ้นเตอร์ ฯลฯ)</div>
+  <div class="warning">⚠️ ไม่สามารถสร้างเคสซ้ำสำหรับเครื่องที่มีเคสค้างอยู่ได้</div>
+</div>
+
+<!-- ====== 5. BATCH CASE ====== -->
+<div class="page" id="batch-case">
+  <h2>5. การสร้างเคสแบบกลุ่ม (Batch) <span class="badge badge-admin">Admin</span></h2>
+  <p>สำหรับสร้างเคสหลายรายการพร้อมกัน มี 4 ขั้นตอน:</p>
+
+  <div class="step"><strong>ขั้นตอนที่ 1 — เลือกเครื่อง:</strong> ค้นหาและเลือกเครื่องหลายเครื่องจากรายการ</div>
+  <div class="step"><strong>ขั้นตอนที่ 2 — ตั้งรายละเอียด:</strong> กำหนดหัวข้อ รายละเอียด และความสำคัญให้แต่ละเคส</div>
+  <div class="step"><strong>ขั้นตอนที่ 3 — ตรวจสอบ:</strong> ดูตัวอย่างเคสทั้งหมดก่อนสร้าง</div>
+  <div class="step"><strong>ขั้นตอนที่ 4 — สร้าง:</strong> กดยืนยัน ระบบจะสร้างเคสทั้งหมดและแสดงผลลัพธ์</div>
+
+  <div class="screenshot">[ภาพ: หน้า Batch — แสดงขั้นตอนการเลือกเครื่องและกรอกรายละเอียด]</div>
+</div>
+
+<!-- ====== 6. CASE LIST ====== -->
+<div class="page" id="case-list">
+  <h2>6. รายการเคสทั้งหมด</h2>
+  <p>คลิกเมนู "📋 เคสทั้งหมด" เพื่อดูรายการเคสทั้งหมด</p>
+
+  <h3>การกรองและค้นหา</h3>
+  <ul>
+    <li><strong>ค้นหา:</strong> พิมพ์เลขเคส หัวข้อ หรือรหัสเครื่อง</li>
+    <li><strong>กรองสถานะ:</strong> เลือกสถานะที่ต้องการดู</li>
+    <li><strong>กรองความสำคัญ:</strong> ปกติ หรือ ด่วน</li>
+    <li><strong>กรองวันที่:</strong> เลือกช่วงวันที่สร้างเคส</li>
+  </ul>
+
+  <h3>คอลัมน์ในตาราง</h3>
+  <table>
+    <tr><th>คอลัมน์</th><th>คำอธิบาย</th></tr>
+    <tr><td>เลขเคส</td><td>รูปแบบ REP-ปี-ลำดับ (เช่น REP-26-0051)</td></tr>
+    <tr><td>หัวข้อ</td><td>ชื่อปัญหาที่แจ้ง</td></tr>
+    <tr><td>หมวดหมู่</td><td>ประเภทปัญหา (ฮาร์ดแวร์, ซอฟต์แวร์ ฯลฯ)</td></tr>
+    <tr><td>เครื่อง</td><td>รหัสเครื่องคอมพิวเตอร์</td></tr>
+    <tr><td>ผู้ให้เช่า</td><td>บริษัทผู้ให้เช่า</td></tr>
+    <tr><td>ผู้แจ้ง</td><td>ชื่อผู้สร้างเคส</td></tr>
+    <tr><td>สถานะ</td><td>สถานะปัจจุบันของเคส</td></tr>
+    <tr><td>ความสำคัญ</td><td>ปกติ หรือ ด่วน</td></tr>
+    <tr><td>วันที่</td><td>วันที่สร้างเคส</td></tr>
+  </table>
+
+  <div class="screenshot">[ภาพ: หน้ารายการเคส — แสดงตารางเคสพร้อมตัวกรอง]</div>
+</div>
+
+<!-- ====== 7. CASE DETAIL ====== -->
+<div class="page" id="case-detail">
+  <h2>7. หน้ารายละเอียดเคส</h2>
+  <p>คลิกที่เคสใดๆ จากรายการเพื่อเปิดหน้ารายละเอียด</p>
+
+  <h3>7.1 ข้อมูลเคสและ SLA</h3>
+  <p>ด้านซ้ายของหน้าจะแสดง:</p>
+  <ul>
+    <li><strong>เลขเคส</strong> และ <strong>หัวข้อ</strong></li>
+    <li><strong>ป้ายสถานะ</strong> และ <strong>ความสำคัญ</strong></li>
+    <li><strong>หมวดหมู่</strong> (สามารถแก้ไขได้โดย Admin/Supervisor/Vendor Staff)</li>
+    <li><strong>เครื่อง:</strong> รหัสเครื่องและรุ่น</li>
+    <li><strong>ผู้ให้เช่า:</strong> บริษัทผู้ให้เช่า</li>
+    <li><strong>สถานที่รับบริการ</strong></li>
+    <li><strong>ผู้แจ้ง:</strong> ชื่อผู้สร้างเคส</li>
+    <li><strong>แจ้งเมื่อ:</strong> วันที่สร้างเคส</li>
+    <li><strong>ช่าง:</strong> ชื่อช่างที่ได้รับมอบหมาย</li>
+    <li><strong>⏱️ SLA:</strong> แสดงเวลาตอบรับและเวลาช่างมาถึง พร้อมแถบสีเขียว (ปกติ) เหลือง (ใกล้หมด) แดง (เกินกำหนด)</li>
+  </ul>
+
+  <div class="screenshot">[ภาพ: หน้ารายละเอียดเคส — แสดงข้อมูลเคสและการ์ด SLA ด้านซ้าย]</div>
+</div>
+
+<div class="page">
+  <h3>7.2 การเปลี่ยนสถานะ</h3>
+  <p>ปุ่มเปลี่ยนสถานะจะแสดงตามสถานะปัจจุบันและสิทธิ์ของผู้ใช้:</p>
+
+  <table>
+    <tr><th>สถานะปัจจุบัน</th><th>สถานะถัดไปที่เปลี่ยนได้</th></tr>
+    <tr><td>รอดำเนินการ</td><td>📌 ตอบรับเรื่อง · ❌ ยกเลิก</td></tr>
+    <tr><td>ตอบรับเรื่อง</td><td>🔧 เริ่มดำเนินการ · ⏸️ พัก · ❌ ยกเลิก</td></tr>
+    <tr><td>กำลังดำเนินการ</td><td>✅ เสร็จสิ้น · ⏸️ พัก · ❌ ยกเลิก</td></tr>
+    <tr><td>พักการดำเนินการ</td><td>🔧 กลับมาดำเนินการ · ❌ ยกเลิก</td></tr>
+    <tr><td>เสร็จสิ้น</td><td>🔒 ปิดรายการ</td></tr>
+  </table>
+
+  <div class="screenshot">[ภาพ: ปุ่มเปลี่ยนสถานะ — แสดง dropdown เลือกสถานะถัดไป]</div>
+
+  <div class="tip">💡 เมื่อเปลี่ยนสถานะ ระบบจะส่งการแจ้งเตือนไปยัง LINE โดยอัตโนมัติ (ถ้าเปิดใช้งาน)</div>
+
+  <h3>7.3 การมอบหมายช่าง</h3>
+  <p>Admin และ Supervisor สามารถมอบหมายช่างได้โดยคลิกปุ่ม "มอบหมายช่าง" และเลือกช่างจากรายชื่อที่กรองตามกลุ่มผู้ให้เช่า</p>
+
+  <div class="screenshot">[ภาพ: Dropdown เลือกช่าง — แสดงรายชื่อ Vendor Staff ในกลุ่ม]</div>
+</div>
+
+<div class="page">
+  <h3>7.4 ประวัติการดำเนินการ (Activity Log)</h3>
+  <p>แสดงไทม์ไลน์ของทุกการกระทำที่เกิดขึ้นกับเคส:</p>
+  <ul>
+    <li>การสร้างเคส</li>
+    <li>การเปลี่ยนสถานะ (พร้อมลูกศรแสดงสถานะก่อน → หลัง)</li>
+    <li>การมอบหมายช่าง</li>
+    <li>การเปลี่ยนหมวดหมู่</li>
+    <li>การยืนยันผลการแก้ไข</li>
+    <li>ความคิดเห็นและรูปภาพ</li>
+  </ul>
+  <p>แต่ละรายการแสดง <strong>ชื่อผู้ดำเนินการ</strong> และ <strong>เวลาที่ดำเนินการ</strong></p>
+
+  <div class="screenshot">[ภาพ: Activity Log — แสดงไทม์ไลน์ประวัติการดำเนินการ]</div>
+
+  <h3>7.5 ความคิดเห็น (Comments)</h3>
+  <p>ผู้ใช้สามารถเพิ่มความคิดเห็นได้ โดยเลือกเป็น:</p>
+  <ul>
+    <li><strong>ความคิดเห็นทั่วไป:</strong> ทุกคนมองเห็น</li>
+    <li><strong>ความคิดเห็นภายใน:</strong> เฉพาะ Admin, Supervisor และ Vendor Staff มองเห็น</li>
+  </ul>
+
+  <div class="screenshot">[ภาพ: ส่วนความคิดเห็น — แสดงช่องกรอกข้อความและปุ่มเลือกภายใน/ทั่วไป]</div>
+</div>
+
+<div class="page">
+  <h3>7.6 การแนบรูปภาพ</h3>
+  <p>สามารถแนบรูปภาพเพิ่มเติมได้จากหน้ารายละเอียดเคส:</p>
+  <div class="step"><strong>ขั้นตอน:</strong> คลิกปุ่ม "แนบรูป" → เลือกไฟล์รูป → รูปจะถูกบีบอัดอัตโนมัติ → กดส่ง</div>
+  <p>รูปภาพจะแสดงเป็นภาพขนาดย่อ (thumbnail) ในประวัติการดำเนินการ คลิกเพื่อดูภาพขนาดเต็ม</p>
+
+  <div class="screenshot">[ภาพ: การแนบรูปภาพ — แสดงปุ่มแนบรูปและภาพขนาดย่อใน Activity Log]</div>
+
+  <h3>7.7 การยืนยันผลการแก้ไข</h3>
+  <p>เมื่อเคสอยู่ในสถานะ "ดำเนินการเสร็จสิ้น" ผู้แจ้งสามารถ:</p>
+  <ul>
+    <li><strong>✅ ยืนยัน:</strong> ยอมรับผลการแก้ไข → เคสพร้อมปิด</li>
+    <li><strong>❌ ไม่ยอมรับ:</strong> ปฏิเสธ → เคสกลับไปสถานะ "กำลังดำเนินการ"</li>
+  </ul>
+
+  <div class="screenshot">[ภาพ: แถบยืนยันผล — แสดงปุ่มยืนยันและไม่ยอมรับ บนพื้นเหลือง]</div>
+</div>
+
+<!-- ====== 8. REPORTS ====== -->
+<div class="page" id="reports">
+  <h2>8. รายงาน (Reports) <span class="badge badge-admin">Admin</span> <span class="badge badge-all">Supervisor</span></h2>
+  <p>เมนู "📊 รายงาน" แสดงข้อมูลสรุปและกราฟต่างๆ:</p>
+
+  <ul>
+    <li><strong>การ์ดสรุป:</strong> เคสทั้งหมด · เปิดอยู่ · ปิดแล้ว · เกิน SLA · ข้อความ LINE ที่ใช้</li>
+    <li><strong>กราฟแท่ง:</strong> แนวโน้มข้อความ LINE รายเดือน</li>
+    <li><strong>กราฟวงกลม:</strong> สัดส่วนเคสตามหมวดหมู่ · สัดส่วน SLA (ผ่าน/เกิน/รอ)</li>
+    <li><strong>กราฟแท่ง:</strong> สรุปเคสรายเดือน (เปิด vs ปิด)</li>
+    <li><strong>กราฟเส้น:</strong> MTTR (เวลาเฉลี่ยในการซ่อม)</li>
+    <li><strong>กราฟแท่งแนวนอน:</strong> ประสิทธิภาพผู้ให้เช่า</li>
+    <li><strong>ตารางสรุป:</strong> จำนวนเคสแยกตามสถานะ</li>
+    <li><strong>ปุ่มส่งออก CSV:</strong> ดาวน์โหลดข้อมูลทั้งหมดเป็นไฟล์ Excel</li>
+  </ul>
+
+  <div class="screenshot">[ภาพ: หน้ารายงาน — แสดงกราฟและการ์ดสรุปต่างๆ]</div>
+</div>
+
+<!-- ====== 9. ADMIN ====== -->
+<div class="page" id="admin">
+  <h2>9. การจัดการระบบ (Admin) <span class="badge badge-admin">Admin</span></h2>
+  <p>เมนู "⚙️ จัดการระบบ" มีเมนูย่อยสำหรับผู้ดูแลระบบเท่านั้น:</p>
+
+  <h3>9.1 จัดการผู้ใช้</h3>
+  <ul>
+    <li>สร้างผู้ใช้ใหม่ (อีเมล, รหัสผ่าน, ชื่อ, บทบาท, ผู้ให้เช่า)</li>
+    <li>แก้ไขข้อมูลผู้ใช้</li>
+    <li>เปลี่ยนรหัสผ่านให้ผู้ใช้</li>
+    <li>เปิด/ปิดการใช้งานผู้ใช้</li>
+    <li>ลบผู้ใช้</li>
+  </ul>
+  <div class="screenshot">[ภาพ: หน้าจัดการผู้ใช้ — แสดงตารางผู้ใช้และฟอร์มสร้าง/แก้ไข]</div>
+
+  <h3>9.2 จัดการผู้ให้เช่า (Vendors)</h3>
+  <ul>
+    <li>เพิ่ม/แก้ไขบริษัทผู้ให้เช่า (ชื่อ, รหัส, ผู้ติดต่อ, อีเมล, โทรศัพท์)</li>
+    <li>กำหนดกลุ่มผู้ให้เช่า</li>
+    <li>กำหนดประเภท (บริษัท/บริษัทย่อย/นามแฝง)</li>
+  </ul>
+  <div class="screenshot">[ภาพ: หน้าจัดการผู้ให้เช่า]</div>
+</div>
+
+<div class="page">
+  <h3>9.3 จัดการกลุ่มผู้ให้เช่า (Vendor Groups)</h3>
+  <ul>
+    <li>สร้างกลุ่มและเพิ่มผู้ให้เช่าเข้ากลุ่ม</li>
+    <li>ตั้งค่าการแจ้งเตือน LINE แยกตามกลุ่ม:
+      <ul>
+        <li>เปิด/ปิดการแจ้งเตือนแต่ละประเภท (สร้างเคส, มอบหมายช่าง, เริ่มดำเนินการ, พัก, เสร็จสิ้น, ปิด, ยกเลิก, ความคิดเห็น, แนบไฟล์, SLA เตือน, SLA เกินกำหนด, ขอยืนยัน)</li>
+        <li>ตรวจหา LINE Group ID อัตโนมัติ</li>
+      </ul>
+    </li>
+  </ul>
+  <div class="screenshot">[ภาพ: หน้าจัดการกลุ่มผู้ให้เช่า — แสดงการตั้งค่า LINE Notification]</div>
+
+  <h3>9.4 จัดการเครื่องคอมพิวเตอร์ (Assets)</h3>
+  <ul>
+    <li>เพิ่ม/แก้ไขเครื่อง (รหัส, ซีเรียล, รุ่น, ผู้ให้เช่า, สถานที่, ผู้ใช้, สถานะ)</li>
+    <li>นำเข้าข้อมูลจากไฟล์ Excel (XLSX)</li>
+    <li>ค้นหาและกรองเครื่อง</li>
+  </ul>
+  <div class="screenshot">[ภาพ: หน้าจัดการเครื่อง — แสดงตารางเครื่องและปุ่มนำเข้า Excel]</div>
+
+  <h3>9.5 จัดการสถานที่ให้บริการ</h3>
+  <p>เพิ่ม/แก้ไข/ลบสถานที่ (ชื่อ, อาคาร, ชั้น) พร้อมจัดเรียงลำดับ</p>
+  <div class="screenshot">[ภาพ: หน้าจัดการสถานที่]</div>
+</div>
+
+<div class="page">
+  <h3>9.6 จัดการเทมเพลต</h3>
+  <p>สร้างเทมเพลตสำหรับกรอกข้อมูลเคสล่วงหน้า (หัวข้อ, รายละเอียด, ความสำคัญ, หมวดหมู่) เพื่อความรวดเร็วในการแจ้งซ่อม</p>
+  <div class="screenshot">[ภาพ: หน้าจัดการเทมเพลต]</div>
+
+  <h3>9.7 ตั้งค่า SLA</h3>
+  <ul>
+    <li>กำหนดชั่วโมงตอบรับ (ค่าเริ่มต้น: 4 ชม.)</li>
+    <li>กำหนดชั่วโมงช่างมาถึง (ค่าเริ่มต้น: 18 ชม.)</li>
+    <li>กำหนดเวลาทำงาน (เริ่ม-สิ้นสุด, ค่าเริ่มต้น: 8:30-17:30)</li>
+  </ul>
+  <div class="screenshot">[ภาพ: หน้าตั้งค่า SLA]</div>
+
+  <h3>9.8 จัดการวันหยุด</h3>
+  <p>เพิ่ม/แก้ไข/ลบวันหยุด (วันที่และชื่อ) — วันหยุดจะถูกยกเว้นจากการคำนวณ SLA สามารถนำเข้าจากไฟล์ CSV ได้</p>
+  <div class="screenshot">[ภาพ: หน้าจัดการวันหยุด]</div>
+
+  <h3>9.9 ส่งออกข้อมูล</h3>
+  <p>ส่งออกฐานข้อมูลเป็นไฟล์ SQL หรือ JSON และเรียกดู/ดาวน์โหลดไฟล์แนบจาก S3 Storage</p>
+  <div class="screenshot">[ภาพ: หน้าส่งออกข้อมูล]</div>
+
+  <h3>9.10 ตั้งค่าอีเมล</h3>
+  <p>เปิด/ปิดการส่งอีเมลแจ้งเตือน ตั้งค่า Provider (Resend หรือ SMTP) และเลือกเหตุการณ์ที่ต้องการให้ส่งอีเมล</p>
+  <div class="screenshot">[ภาพ: หน้าตั้งค่าอีเมล]</div>
+</div>
+
+<!-- ====== 10. LINE ====== -->
+<div class="page" id="line">
+  <h2>10. การใช้งานผ่าน LINE</h2>
+  <p>RepairDesk รองรับการใช้งานผ่าน LINE Group:</p>
+
+  <h3>การรับการแจ้งเตือน</h3>
+  <p>เมื่อมีเหตุการณ์เกิดขึ้นกับเคส (สร้างเคส, เปลี่ยนสถานะ, SLA เตือน ฯลฯ) ระบบจะส่งข้อความไปยัง LINE Group ของกลุ่มผู้ให้เช่านั้นๆ โดยอัตโนมัติ</p>
+
+  <h3>การตรวจสอบสถานะเคส</h3>
+  <p>ใน LINE Group สามารถพิมพ์ <strong>เลขเคส</strong> (เช่น <code>0051</code> หรือ <code>REP-26-0051</code>) เพื่อดูสถานะล่าสุดของเคสนั้น</p>
+
+  <h3>การส่งรูปภาพ</h3>
+  <p>ส่งรูปภาพใน LINE Group เพื่อแนบเข้ากับเคสล่าสุดของกลุ่มนั้นโดยอัตโนมัติ</p>
+
+  <div class="screenshot">[ภาพ: ตัวอย่างการแจ้งเตือนใน LINE Group — แสดงข้อความแจ้งสถานะเคส]</div>
+
+  <div class="tip">💡 การแจ้งเตือนแต่ละประเภทสามารถเปิด/ปิดแยกตามกลุ่มผู้ให้เช่าได้ที่หน้า "จัดการกลุ่มผู้ให้เช่า"</div>
+</div>
+
+<!-- ====== 11. PROFILE ====== -->
+<div class="page" id="profile">
+  <h2>11. การจัดการโปรไฟล์</h2>
+  <p>คลิกที่ชื่อผู้ใช้มุมล่างซ้ายของแถบด้านข้าง → "โปรไฟล์"</p>
+
+  <ul>
+    <li>ดูข้อมูลส่วนตัว (ชื่อ, อีเมล, บทบาท, วันที่ลงทะเบียน)</li>
+    <li>เปลี่ยนรหัสผ่าน (ต้องกรอกรหัสผ่านปัจจุบัน)</li>
+  </ul>
+
+  <div class="screenshot">[ภาพ: หน้าโปรไฟล์ — แสดงข้อมูลผู้ใช้และฟอร์มเปลี่ยนรหัสผ่าน]</div>
+
+  <h3>การออกจากระบบ</h3>
+  <p>คลิกปุ่ม "ออกจากระบบ" ที่มุมล่างซ้ายของแถบด้านข้าง</p>
+</div>
+
+<!-- ====== LAST PAGE ====== -->
+<div class="page" style="text-align:center; padding-top:200px;">
+  <h1 style="color:#2563eb;">📋</h1>
+  <p style="font-size:20px; color:#6b7280; margin-top:20px;">— จบคู่มือ —</p>
+  <p style="color:#9ca3af; margin-top:40px;">RepairDesk · ระบบแจ้งซ่อมคอมพิวเตอร์</p>
+  <p style="color:#9ca3af;">หากมีข้อสงสัยเพิ่มเติม กรุณาติดต่อผู้ดูแลระบบ</p>
+</div>
+
+</body>
+</html>
