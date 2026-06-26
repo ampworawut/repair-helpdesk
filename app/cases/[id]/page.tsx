@@ -901,26 +901,25 @@ export default function CaseDetailPage() {
           {/* ── Action Row ── */}
           {canUpdate && c.status !== 'closed' && c.status !== 'cancelled' && (
             <div className="bg-white rounded-xl border p-5 space-y-3">
-              {/* Change Status — full width */}
+              {/* Change Status — buttons */}
               {STATUS_FLOW[c.status].length > 0 && (
-                <div className="relative">
-                  <button onClick={() => setShowStatusMenu(!showStatusMenu)}
-                    className="w-full flex items-center justify-between gap-2 px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium text-sm">
-                    <span>{STATUS_ACTION_LABELS[c.status]}</span>
-                    <ChevronDown className="w-4 h-4" />
-                  </button>
-                  {showStatusMenu && (
-                    <div className="absolute top-full mt-1 left-0 right-0 bg-white border rounded-lg shadow-lg z-20 py-1">
-                      {STATUS_FLOW[c.status]
-                        .filter(s => {
-                          if (s === 'cancelled') return role === 'admin' || role === 'supervisor'
-                          if (s === 'responded') return role === 'admin' || role === 'vendor_staff'
-                          if (role === 'vendor_staff') return false // vendor can only respond
-                          return true
-                        })
-                        .map(s => (
+                <div className="flex flex-col gap-2">
+                  {STATUS_FLOW[c.status]
+                    .filter(s => {
+                      if (s === 'cancelled') return role === 'admin' || role === 'supervisor'
+                      if (s === 'responded') return role === 'admin' || role === 'vendor_staff'
+                      if (role === 'vendor_staff') return false // vendor can only respond
+                      return true
+                    })
+                    .map(s => {
+                      let btnColor = "bg-blue-600 hover:bg-blue-700 text-white border-transparent"
+                      if (s === 'closed') btnColor = "bg-green-600 hover:bg-green-700 text-white border-transparent"
+                      else if (s === 'cancelled') btnColor = "bg-red-600 hover:bg-red-700 text-white border-transparent"
+                      else if (s === 'on_hold') btnColor = "bg-amber-600 hover:bg-amber-700 text-white border-transparent"
+                      else if (s === 'in_progress') btnColor = "bg-purple-600 hover:bg-purple-700 text-white border-transparent"
+                      
+                      return (
                         <button key={s} type="button" onClick={() => {
-                          setShowStatusMenu(false)
                           const statusMessages: Record<string, string> = {
                             responded: 'คุณต้องการตอบรับเรื่องนี้ใช่หรือไม่?',
                             in_progress: 'คุณต้องการเริ่มดำเนินการเรื่องนี้ใช่หรือไม่?',
@@ -935,17 +934,16 @@ export default function CaseDetailPage() {
                             message: statusMessages[s] || `เปลี่ยนสถานะเป็น ${STATUS_LABELS[s]}`,
                           })
                         }}
-                          className="w-full text-left px-4 py-2.5 text-sm hover:bg-gray-50 transition flex items-center gap-2">
-                          {s === 'closed' ? <CheckCircle2 className="w-4 h-4 text-green-600" /> :
-                           s === 'cancelled' ? <XCircle className="w-4 h-4 text-red-500" /> :
-                           s === 'on_hold' ? <PauseCircle className="w-4 h-4 text-amber-600" /> :
-                           s === 'in_progress' ? <PlayCircle className="w-4 h-4 text-purple-600" /> :
-                           <Clock className="w-4 h-4 text-blue-600" />}
+                          className={`w-full flex items-center justify-center gap-2 px-4 py-3 border rounded-lg transition font-medium text-sm shadow-sm ${btnColor}`}>
+                          {s === 'closed' ? <CheckCircle2 className="w-4 h-4" /> :
+                           s === 'cancelled' ? <XCircle className="w-4 h-4" /> :
+                           s === 'on_hold' ? <PauseCircle className="w-4 h-4" /> :
+                           s === 'in_progress' ? <PlayCircle className="w-4 h-4" /> :
+                           <Clock className="w-4 h-4" />}
                           {TARGET_STATUS_LABELS[s] || STATUS_LABELS[s]}
                         </button>
-                      ))}
-                    </div>
-                  )}
+                      )
+                    })}
                 </div>
               )}
 
