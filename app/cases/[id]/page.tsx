@@ -902,50 +902,63 @@ export default function CaseDetailPage() {
           {canUpdate && c.status !== 'closed' && c.status !== 'cancelled' && (
             <div className="bg-white rounded-xl border p-5 space-y-3">
               {/* Change Status — buttons */}
-              {STATUS_FLOW[c.status].length > 0 && (
-                <div className="flex flex-col gap-2">
-                  {STATUS_FLOW[c.status]
-                    .filter(s => {
-                      if (s === 'cancelled') return role === 'admin' || role === 'supervisor'
-                      if (s === 'responded') return role === 'admin' || role === 'vendor_staff'
-                      if (role === 'vendor_staff') return false // vendor can only respond
-                      return true
-                    })
-                    .map(s => {
-                      let btnColor = "bg-blue-600 hover:bg-blue-700 text-white border-transparent"
-                      if (s === 'closed') btnColor = "bg-green-600 hover:bg-green-700 text-white border-transparent"
-                      else if (s === 'cancelled') btnColor = "bg-red-600 hover:bg-red-700 text-white border-transparent"
-                      else if (s === 'on_hold') btnColor = "bg-amber-600 hover:bg-amber-700 text-white border-transparent"
-                      else if (s === 'in_progress') btnColor = "bg-purple-600 hover:bg-purple-700 text-white border-transparent"
-                      
-                      return (
-                        <button key={s} type="button" onClick={() => {
-                          const statusMessages: Record<string, string> = {
-                            responded: 'คุณต้องการตอบรับเรื่องนี้ใช่หรือไม่?',
-                            in_progress: 'คุณต้องการเริ่มดำเนินการเรื่องนี้ใช่หรือไม่?',
-                            on_hold: 'คุณต้องการพักการดำเนินการเรื่องนี้ใช่หรือไม่? SLA จะหยุดนับชั่วคราว',
-                            resolved: 'คุณต้องการแจ้งว่าดำเนินการเสร็จสิ้นแล้วใช่หรือไม่?',
-                            closed: 'คุณต้องการปิดรายการนี้ใช่หรือไม่?',
-                            cancelled: 'คุณต้องการยกเลิกรายการนี้ใช่หรือไม่? การดำเนินการนี้ไม่สามารถย้อนกลับได้',
-                          }
-                          setConfirmStatus({
-                            newStatus: s,
-                            title: STATUS_ACTION_LABELS[s],
-                            message: statusMessages[s] || `เปลี่ยนสถานะเป็น ${STATUS_LABELS[s]}`,
-                          })
-                        }}
-                          className={`w-full flex items-center justify-center gap-2 px-4 py-3 border rounded-lg transition font-medium text-sm shadow-sm ${btnColor}`}>
-                          {s === 'closed' ? <CheckCircle2 className="w-4 h-4" /> :
-                           s === 'cancelled' ? <XCircle className="w-4 h-4" /> :
-                           s === 'on_hold' ? <PauseCircle className="w-4 h-4" /> :
-                           s === 'in_progress' ? <PlayCircle className="w-4 h-4" /> :
-                           <Clock className="w-4 h-4" />}
-                          {TARGET_STATUS_LABELS[s] || STATUS_LABELS[s]}
-                        </button>
-                      )
-                    })}
-                </div>
-              )}
+              {(() => {
+                const availableStatuses = STATUS_FLOW[c.status].filter(s => {
+                  if (s === 'cancelled') return role === 'admin' || role === 'supervisor'
+                  if (s === 'responded') return role === 'admin' || role === 'vendor_staff'
+                  if (role === 'vendor_staff') return false // vendor can only respond
+                  return true
+                })
+                
+                if (availableStatuses.length > 0) {
+                  return (
+                    <div className="flex flex-col gap-2">
+                      {availableStatuses.map(s => {
+                        let btnColor = "bg-blue-600 hover:bg-blue-700 text-white border-transparent"
+                        if (s === 'closed') btnColor = "bg-green-600 hover:bg-green-700 text-white border-transparent"
+                        else if (s === 'cancelled') btnColor = "bg-red-600 hover:bg-red-700 text-white border-transparent"
+                        else if (s === 'on_hold') btnColor = "bg-amber-600 hover:bg-amber-700 text-white border-transparent"
+                        else if (s === 'in_progress') btnColor = "bg-purple-600 hover:bg-purple-700 text-white border-transparent"
+                        
+                        return (
+                          <button key={s} type="button" onClick={() => {
+                            const statusMessages: Record<string, string> = {
+                              responded: 'คุณต้องการตอบรับเรื่องนี้ใช่หรือไม่?',
+                              in_progress: 'คุณต้องการเริ่มดำเนินการเรื่องนี้ใช่หรือไม่?',
+                              on_hold: 'คุณต้องการพักการดำเนินการเรื่องนี้ใช่หรือไม่? SLA จะหยุดนับชั่วคราว',
+                              resolved: 'คุณต้องการแจ้งว่าดำเนินการเสร็จสิ้นแล้วใช่หรือไม่?',
+                              closed: 'คุณต้องการปิดรายการนี้ใช่หรือไม่?',
+                              cancelled: 'คุณต้องการยกเลิกรายการนี้ใช่หรือไม่? การดำเนินการนี้ไม่สามารถย้อนกลับได้',
+                            }
+                            setConfirmStatus({
+                              newStatus: s,
+                              title: STATUS_ACTION_LABELS[s],
+                              message: statusMessages[s] || `เปลี่ยนสถานะเป็น ${STATUS_LABELS[s]}`,
+                            })
+                          }}
+                            className={`w-full flex items-center justify-center gap-2 px-4 py-3 border rounded-lg transition font-medium text-sm shadow-sm ${btnColor}`}>
+                            {s === 'closed' ? <CheckCircle2 className="w-4 h-4" /> :
+                             s === 'cancelled' ? <XCircle className="w-4 h-4" /> :
+                             s === 'on_hold' ? <PauseCircle className="w-4 h-4" /> :
+                             s === 'in_progress' ? <PlayCircle className="w-4 h-4" /> :
+                             <Clock className="w-4 h-4" />}
+                            {TARGET_STATUS_LABELS[s] || STATUS_LABELS[s]}
+                          </button>
+                        )
+                      })}
+                    </div>
+                  )
+                } else {
+                  return (
+                    <div className="flex flex-col gap-2">
+                      <button disabled className="w-full flex items-center justify-center gap-2 px-4 py-3 border border-gray-300 bg-gray-100 text-gray-500 rounded-lg transition font-medium text-sm shadow-sm cursor-not-allowed">
+                        <Clock className="w-4 h-4" />
+                        {STATUS_LABELS[c.status] || c.status}
+                      </button>
+                    </div>
+                  )
+                }
+              })()}
 
               {/* Assign Technician — secondary */}
               {canAssign && vendorStaff.length > 0 && (
